@@ -95,12 +95,36 @@ def get_totp_uri(secret: str, email: str) -> str:
 
 def generate_qr_code_base64(totp_uri: str) -> str:
     """
-    Generate QR code as base64 string
+    Generate QR code as base64 string (using OpenCV to avoid Pillow)
     """
-    img = qrcode.make(totp_uri)
-    buffer = io.BytesIO()
-    img.save(buffer, format="PNG")
-    return base64.b64encode(buffer.getvalue()).decode()
+    import numpy as np
+    import cv2
+    
+    qr = qrcode.QRCode(border=2)
+    qr.add_data(totp_uri)
+    qr.make(fit=True)
+    
+    # Get matrix (list of lists of bools)
+    matrix = qr.get_matrix()
+    size = len(matrix)
+    
+    # Convert to numpy array (0 for black, 255 for white)
+    img_array = np.zeros((size, size), dtype=np.uint8)
+    for y in range(size):
+        for x in range(size):
+            if not matrix[y][x]: # matrix[y][x] is True for dark, False for light in some versions? 
+                # Actually qrcode library: True is black, False is white
+                img_array[y, x] = 255
+            else:
+                img_array[y, x] = 0
+                
+    # Scale up for visibility
+    scale = 10
+    img_array = cv2.resize(img_array, (size * scale, size * scale), interpolation=cv2.INTER_NEAREST)
+    
+    # Encode as PNG
+    _, buffer = cv2.imencode(".png", img_array)
+    return base64.b64encode(buffer).decode()
 
 
 def verify_totp(secret: str, code: str) -> bool:

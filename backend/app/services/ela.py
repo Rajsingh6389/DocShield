@@ -2,10 +2,8 @@
 Error Level Analysis (ELA) — detects JPEG compression inconsistencies
 that indicate regions were added/modified after original compression.
 """
-import os
-import io
+import cv2
 import numpy as np
-from PIL import Image, ImageChops, ImageEnhance
 from typing import Tuple, Dict, Any
 
 
@@ -17,25 +15,30 @@ def run_ela(image_path: str, quality: int = 90) -> Tuple[float, np.ndarray, Dict
         details: dict with statistics
     """
     try:
-        original = Image.open(image_path).convert("RGB")
+        # Load original using OpenCV
+        original = cv2.imread(image_path)
+        if original is None:
+            raise ValueError("Could not read image")
+        original = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
     except Exception as e:
         return 0.0, np.zeros((100, 100, 3), dtype=np.uint8), {"error": str(e)}
 
-    # Re-compress at target quality
-    buffer = io.BytesIO()
-    original.save(buffer, format="JPEG", quality=quality)
-    buffer.seek(0)
-    print(f"      >> JPEG_RECOMPRESSION: Applied delta at Q={quality}")
-    recompressed = Image.open(buffer).convert("RGB")
+    # Re-compress at target quality using OpenCV
+    try:
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+        result, enc_img = cv2.imencode('.jpg', cv2.cvtColor(original, cv2.COLOR_RGB2BGR), encode_param)
+        recompressed = cv2.imdecode(enc_img, cv2.IMREAD_COLOR)
+        recompressed = cv2.cvtColor(recompressed, cv2.COLOR_BGR2RGB)
+    except Exception as e:
+        return 0.0, np.zeros((100, 100, 3), dtype=np.uint8), {"error": f"Recompression failed: {str(e)}"}
 
-    # Difference image, amplified
-    diff = ImageChops.difference(original, recompressed)
-    enhancer = ImageEnhance.Brightness(diff)
-    ela_image = enhancer.enhance(20)
-
-    ela_array = np.array(ela_image)
-    orig_array = np.array(original)
-
+    # Difference image
+    # Note: cv2.absdiff returns the absolute difference between two arrays
+    diff = cv2.absdiff(original, recompressed)
+    
+    # Amplify the difference (equivalent to ImageEnhance.Brightness)
+    ela_array = cv2.convertScaleAbs(diff, alpha=20.0, beta=0)
+    
     # Compute regional stats
     flat = ela_array.flatten().astype(float)
     mean_val = float(np.mean(flat))
@@ -49,7 +52,6 @@ def run_ela(image_path: str, quality: int = 90) -> Tuple[float, np.ndarray, Dict
     suspicious_ratio = suspicious_pixels / max(total_pixels, 1)
 
     # Score: based on suspicious pixel ratio and max deviation
-    print(f"      >> ELA_SIGNAL_INTENSITY: MaxVal={max_val}, Mean={mean_val:.2f}")
     score = min(1.0, suspicious_ratio * 3.0 + (max_val / 255.0) * 0.3)
 
     details = {
@@ -58,7 +60,7 @@ def run_ela(image_path: str, quality: int = 90) -> Tuple[float, np.ndarray, Dict
         "ela_max": round(max_val, 3),
         "suspicious_pixel_ratio": round(suspicious_ratio, 4),
         "quality_used": quality,
-        "image_size": list(original.size),
+        "image_size": [original.shape[1], original.shape[0]],
     }
 
     return round(score, 4), ela_array, details

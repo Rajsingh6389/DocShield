@@ -12,7 +12,8 @@ try:
 except ImportError:
     PIEXIF_AVAILABLE = False
 
-from PIL import Image
+import cv2
+
 
 SUSPICIOUS_SOFTWARE = [
     "photoshop", "gimp", "lightroom", "affinity", "pixelmator",
@@ -32,11 +33,14 @@ def run_metadata_analysis(image_path: str) -> Tuple[float, Dict[str, Any]]:
     metadata = {}
 
     try:
-        img = Image.open(image_path)
-        info = img.info or {}
-        metadata["format"] = img.format
-        metadata["mode"] = img.mode
-        metadata["size"] = list(img.size)
+        img = cv2.imread(image_path)
+        if img is None:
+            raise ValueError("Could not read image")
+        
+        h, w = img.shape[:2]
+        metadata["format"] = os.path.splitext(image_path)[1].lstrip(".").upper()
+        metadata["mode"] = "RGB" if len(img.shape) == 3 else "Grayscale"
+        metadata["size"] = [w, h]
     except Exception as e:
         return 0.0, {"error": str(e)}
 

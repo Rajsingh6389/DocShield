@@ -7,7 +7,7 @@ import os
 import base64
 import numpy as np
 import cv2
-from PIL import Image
+import cv2
 from typing import Optional, Tuple
 
 from app.core.config import settings
