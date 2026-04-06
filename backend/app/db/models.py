@@ -230,3 +230,18 @@ class Notification(Base):
     is_read = Column(Boolean, default=False)
     document_id = Column(GUID(), nullable=True)
     created_at = Column(DateTime(timezone=True), default=now_utc)
+
+
+# ─── Blockchain ──────────────────────────────────────────────────────────────
+
+class BlockchainDocument(Base):
+    __tablename__ = "blockchain_documents"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    file_hash = Column(String(64), nullable=False, index=True, unique=True)
+    original_filename = Column(String(512), nullable=False)
+    admin_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
+    timestamp = Column(DateTime(timezone=True), default=now_utc)
+    transaction_id = Column(String(128), nullable=False)  # Simulated Tx ID
+
+    admin = relationship("User")

@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Shield, LayoutDashboard, Upload, Folder,
   Settings, Activity, LogOut, ChevronLeft,
-  X, Bell, Briefcase, ShieldAlert
+  X, Bell, Briefcase, ShieldAlert, Database
 } from 'lucide-react'
 import { useAuthStore, useUIStore } from '../store/useStore'
 
@@ -17,6 +17,7 @@ export default function Sidebar() {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'DASHBOARD', roles: ['admin', 'reviewer', 'auditor'] },
     { to: '/upload',    icon: Upload,          label: 'UPLINK',    roles: ['admin', 'reviewer', 'auditor'] },
+    { to: '/blockchain', icon: Database,        label: 'BLOCKCHAIN', roles: ['admin', 'reviewer', 'auditor'] },
     { to: '/notifications', icon: Bell,        label: 'ALERTS',    roles: ['admin', 'reviewer', 'auditor'] },
     { to: '/cases',     icon: Briefcase,       label: 'INCIDENTS', roles: ['admin', 'reviewer'] },
     { to: '/admin',     icon: ShieldAlert,     label: 'ROOT_ADM',  roles: ['admin'] },

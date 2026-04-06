@@ -13,6 +13,7 @@ const ActivityPage   = lazy(() => import('./pages/ActivityPage'))
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
 const CasesPage      = lazy(() => import('./pages/CasesPage'))
 const SettingsPage   = lazy(() => import('./pages/SettingsPage'))
+const BlockchainPage = lazy(() => import('./pages/BlockchainPage'))
 
 function PrivateRoute({ children }) {
   const token = useAuthStore((s) => s.token)
@@ -51,6 +52,7 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard"  element={<DashboardPage />} />
             <Route path="upload"     element={<UploadPage />} />
+            <Route path="blockchain" element={<BlockchainPage />} />
             <Route path="results/:id" element={<ResultsPage />} />
             <Route path="admin"      element={<AdminPage />} />
             <Route path="activity"   element={<ActivityPage />} />

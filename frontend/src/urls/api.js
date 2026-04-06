@@ -39,6 +39,10 @@ export const ENDPOINTS = {
     LIST: '/cases/',
     GET: (id) => `/cases/${id}`,
     UPDATE: (id) => `/cases/${id}`,
+  },
+  BLOCKCHAIN: {
+    REGISTER: '/blockchain/register',
+    VERIFY: '/blockchain/verify',
   }
 };
 
@@ -46,7 +50,7 @@ export const getWsStatusUrl = (id) => {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
   // Use the same host as the API, or fallback to current host
   const host = API_BASE_URL.startsWith('http') 
-    ? new URL(API_BASE_URL).host.replace('localhost', '127.0.0.1') 
+    ? new URL(API_BASE_URL).host 
     : window.location.host;
   return `${protocol}://${host}/ws/status/${id}`;
 };

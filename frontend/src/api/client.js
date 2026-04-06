@@ -79,4 +79,14 @@ export const notificationsApi = {
   markAllRead: () => api.post(ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ),
 }
 
+// ── Blockchain ──────────────────────────────────────────
+export const blockchainApi = {
+  register: (formData) => api.post(ENDPOINTS.BLOCKCHAIN.REGISTER, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  verify: (formData) => api.post(ENDPOINTS.BLOCKCHAIN.VERIFY, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+}
+
 export default api

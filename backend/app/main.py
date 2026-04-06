@@ -7,7 +7,7 @@ from loguru import logger
 
 from app.core.config import settings
 from app.db.database import create_tables
-from app.api import auth, documents, analysis, cases, admin, notifications, websocket
+from app.api import auth, documents, analysis, cases, admin, notifications, websocket, blockchain_api
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -53,6 +53,7 @@ app.include_router(analysis.router, prefix="/api")
 app.include_router(cases.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
+app.include_router(blockchain_api.router, prefix="/api")
 app.include_router(websocket.router)
 
 # ── Static Files ─────────────────────────────────────────────────────────────
