@@ -72,7 +72,8 @@ def run_ocr_analysis(image_path: str) -> Tuple[float, List[Dict], Dict[str, Any]
         # -------------------------------
         # 🔥 IMAGE ENHANCEMENT
         # -------------------------------
-        gray = cv2.fastNlMeansDenoising(gray, None, 30, 7, 21)
+        # ⚡ OPTIMIZED: Use faster bilateral filter or Gaussian instead of Heavy NlMeans
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
 
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         gray = clahe.apply(gray)
@@ -118,7 +119,7 @@ def run_ocr_analysis(image_path: str) -> Tuple[float, List[Dict], Dict[str, Any]
                 config=custom_config
             )
 
-        if len([t for t in ocr_data["text"] if t.strip()]) < 5:
+        if len([t for t in ocr_data["text"] if t.strip()]) < 2:
             print("      >> OCR_PASS_3 (Raw)...")
             ocr_data = pytesseract.image_to_data(
                 gray,

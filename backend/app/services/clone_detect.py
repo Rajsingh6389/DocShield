@@ -21,6 +21,13 @@ def run_clone_detection(image_path: str) -> Tuple[float, List[Dict], Dict[str, A
         img = cv2.imread(image_path)
         if img is None:
             return 0.0, [], {"error": "Could not read image"}, np.zeros((100, 100, 3), dtype=np.uint8)
+
+        # ⚡ OPTIMIZED: Resize for faster ORB if giant
+        h, w = img.shape[:2]
+        if w > 1200:
+            scale = 1200 / w
+            img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         viz_img = img.copy()
     except Exception as e:

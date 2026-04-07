@@ -43,11 +43,24 @@ def run_dit_analysis(image_path: str) -> Tuple[float, Dict[str, Any]]:
 
         model_id = "microsoft/dit-base-finetuned-rvlcdip"
 
-        print(f" [🤖] DOCUMENT_TRANSFORMER :: UPLINK :: model={model_id}")
+        # ⚡ OPTIMIZED: Resize before network upload to reduce latency
+        img = cv2.imread(image_path)
+        if img is None:
+             return 0.0, {"error": "Image not readable"}
+        
+        h, w = img.shape[:2]
+        if w > 800:
+            scale = 800 / w
+            img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+        
+        _, buffer = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        image_bytes = buffer.tobytes()
+
+        print(f" [🤖] AI_UPLINK :: DOCUMENT IMAGE TRANSFORMER (DiT)... (Payload: {len(image_bytes)//1024} KB)")
 
         # 🔥 Call Hugging Face API
         results = client.image_classification(
-            image_path,
+            image_bytes,
             model=model_id
         )
 
