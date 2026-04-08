@@ -1,48 +1,35 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, CheckCircle, XCircle, Loader, Zap, Terminal, ShieldAlert, Cpu } from 'lucide-react'
+import { Upload, FileText, CheckCircle, XCircle, Zap, Terminal, Cpu } from 'lucide-react'
 import { documentsApi } from '../api/client'
 import toast from 'react-hot-toast'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { Loader } from '../components/ui/Loader'
 
 const ACCEPTED = { 'image/*': ['.jpg','.jpeg','.png','.tiff','.bmp'], 'application/pdf': ['.pdf'] }
 
-function FileRow({ file, status, progress, docId, onNavigate }) {
-  const color = status === 'done' ? 'var(--neon-green)' : status === 'error' ? 'var(--neon-red)' : 'var(--neon-cyan)'
-  
-  return (
-    <div style={{ display:'flex', alignItems:'center', gap:'var(--sp-4)', padding:'var(--sp-3) var(--sp-4)', background:'rgba(0,0,0,0.2)', border:`1px solid #111`, borderLeft: `2px solid ${color}`, marginBottom:'var(--sp-3)' }}>
-      <FileText size={18} color={color} style={{ flexShrink:0 }} />
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:'0.75rem', fontWeight:700, color: '#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontFamily: 'var(--font-mono)' }}>
-          {file.name.toUpperCase()}
-        </div>
-        <div style={{ fontSize:'0.6rem', color:'#444', fontFamily: 'var(--font-mono)' }}>
-          SIZE: {(file.size / 1024 / 1024).toFixed(2)} MB
-        </div>
-        {status === 'uploading' && (
-          <div style={{ height:2, background:'#111', marginTop:8, overflow:'hidden' }}>
-            <div style={{ height:'100%', width:`${progress}%`, background:color, transition:'width 0.3s ease', boxShadow: `0 0 5px ${color}` }} />
-          </div>
-        )}
-      </div>
-      <div style={{ flexShrink:0 }}>
-        {status === 'idle' && <span style={{ fontSize: '0.6rem', color: '#444', fontWeight: 800 }}>[ READY ]</span>}
-        {status === 'uploading' && <Loader size={14} className="spin" color="var(--neon-cyan)" />}
-        {status === 'done' && <CheckCircle size={16} color="var(--neon-green)" />}
-        {status === 'error' && <XCircle size={16} color="var(--neon-red)" />}
-      </div>
-      {status === 'done' && docId && (
-        <button className="btn btn-sm" onClick={() => onNavigate(docId)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.65rem' }}>OPEN_REPORT</button>
-      )}
-    </div>
-  )
-}
+const PHASES = ['UPLOADING', 'SCANNING', 'THREAT DETECTION', 'VERIFICATION', 'REPORT GENERATION']
+
+const FAKE_LOGS = [
+  '[SYS] Initializing Quantum Analysis Uplink...',
+  '[SYS] Routing document to secure sandbox ENCLAVE_9...',
+  '[ELA] Running Error Level Analysis (Pixel recompression)...',
+  '[OCR] Extracting and verifying text integrity...',
+  '[ML] Neural clone detection in progress...',
+  '[NET] Connecting to decentralized ledger...',
+  '[VERIFY] Cryptographic hash check passed.',
+  '[SYS] Finalizing telemetry and constructing HUD...'
+]
 
 export default function UploadPage() {
   const navigate = useNavigate()
   const [files, setFiles] = useState([]) 
   const [uploading, setUploading] = useState(false)
+  const [phaseIndex, setPhaseIndex] = useState(0)
+  const [logs, setLogs] = useState([])
 
   const onDrop = useCallback((accepted) => {
     const newFiles = accepted.map(f => ({ file: f, status: 'idle', progress: 0, docId: null }))
@@ -50,8 +37,32 @@ export default function UploadPage() {
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop, multiple: true, accept: ACCEPTED, maxSize: 20 * 1024 * 1024,
+    onDrop, multiple: true, accept: ACCEPTED, maxSize: 20 * 1024 * 1024, disabled: uploading
   })
+
+  // Simulated fake terminal logs effect
+  useEffect(() => {
+    if (uploading) {
+      setLogs([])
+      setPhaseIndex(0)
+      let logIdx = 0
+      
+      const logInterval = setInterval(() => {
+        if (logIdx < FAKE_LOGS.length) {
+          setLogs(prev => [...prev, FAKE_LOGS[logIdx]])
+          logIdx++
+          // Roughly map log index to phase index (just for UI)
+          if (logIdx === 2) setPhaseIndex(1)
+          if (logIdx === 4) setPhaseIndex(2)
+          if (logIdx === 6) setPhaseIndex(3)
+        } else {
+          clearInterval(logInterval)
+        }
+      }, 800)
+
+      return () => clearInterval(logInterval)
+    }
+  }, [uploading])
 
   const uploadAll = async () => {
     setUploading(true)
@@ -65,102 +76,172 @@ export default function UploadPage() {
         const { data } = await documentsApi.upload(fd, (p) => {
           setFiles(prev => prev.map((f, fi) => fi === idx ? { ...f, progress: p } : f))
         })
+        setPhaseIndex(4) // Report phase
         setFiles(prev => prev.map((f, fi) => fi === idx ? { ...f, status: 'done', docId: data.id } : f))
       } catch {
         setFiles(prev => prev.map((f, fi) => fi === idx ? { ...f, status: 'error' } : f))
         toast.error(`ERROR_UPLINK_FAILURE: ${toUpload[i].file.name.toUpperCase()}`)
       }
     }
-    setUploading(false)
+    setTimeout(() => { setUploading(false) }, 1000)
   }
 
-  const clear = () => setFiles([])
+  const clear = () => !uploading && setFiles([])
   const idleCount = files.filter(f => f.status === 'idle').length
 
   return (
-    <div className="fade-in scanline">
-      <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-2)' }}>
-          <Zap size={14} color="var(--neon-green)" />
-          <span style={{ fontSize: '0.65rem', color: '#555', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>UPLINK_READY :: WAITING_FOR_SIGNAL</span>
+    <div className="relative pb-24">
+      {/* Header */}
+      <div className="mb-8 border-b border-white/5 pb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Activity size={14} className="text-cyber-green animate-pulse" />
+          <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">Uplink_Status: READY</span>
         </div>
-        <h2 className="glitch" style={{ fontSize: '1.75rem', fontWeight: 900 }}>UPLOAD_UPLINK</h2>
-        <p className="page-subtitle typewriter" style={{ width: 'fit-content' }}>TRANSMIT_DOCUMENTS_FOR_DEEP_NEURAL_SCANNING</p>
+        <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow uppercase">Secure_Upload</h2>
+        <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">INITIALIZING_QUANTUM_ANALYSIS_UPLINK</p>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="card neon-border-flow" style={{ gridColumn: 'span 2' }}>
-          <div 
-            {...getRootProps()} 
-            className={`upload-zone ${isDragActive ? 'active' : ''}`}
-            style={{ 
-              border: '2px dashed #222',
-              background: isDragActive ? 'rgba(0,255,65,0.05)' : 'rgba(5,5,5,0.5)',
-              padding: 'var(--sp-12)',
-              textAlign: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
+      <AnimatePresence mode="wait">
+        {!uploading ? (
+          <motion.div
+            key="dropzone"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, y: -20 }}
           >
-            <input {...getInputProps()} />
-            {isDragActive && <div style={{ position:'absolute', inset:0, background: 'rgba(0,255,65,0.05)', animation: 'pulse 1s infinite' }} />}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'var(--sp-4)', position:'relative', zIndex:1 }}>
-              <div className={isDragActive ? 'spin' : ''}>
-                 <Upload size={48} color={isDragActive ? 'var(--neon-green)' : '#333'} />
-              </div>
-              <div>
-                <p style={{ color: isDragActive ? 'var(--neon-green)' : '#ccc', fontWeight:900, fontSize:'0.9rem', marginBottom:4, fontFamily: 'var(--font-mono)' }}>
-                  {isDragActive ? '>>> SIGNAL_LOCKED <<<' : 'DRAG_ANALYSIS_TARGET_HERE'}
+            <Card className={`
+              border-dashed border-2 mb-8 transition-colors text-center cursor-pointer p-12
+              ${isDragActive ? 'border-cyber-green bg-cyber-green/5' : 'border-white/10 bg-obsidian-800/40 hover:border-cyber-cyan/30'}
+            `}>
+              <div {...getRootProps()} className="flex flex-col items-center justify-center outline-none min-h-[200px]">
+                <input {...getInputProps()} />
+                <motion.div 
+                  animate={isDragActive ? { y: [0, -10, 0] } : {}} 
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="w-20 h-20 bg-cyber-cyan/10 rounded-full flex items-center justify-center mb-6"
+                >
+                  <Upload size={32} className={isDragActive ? 'text-cyber-green' : 'text-cyber-cyan'} />
+                </motion.div>
+                <h3 className={`text-xl font-hud font-bold tracking-widest uppercase mb-2 ${isDragActive ? 'text-cyber-green neon-text-glow' : 'text-white'}`}>
+                  {isDragActive ? '>>> TARGET_LOCK_CORE_DNA <<<' : 'INITIATE_DOCUMENT_UPLINK'}
+                </h3>
+                <p className="text-sm font-mono text-gray-500 uppercase">
+                  {isDragActive ? 'SOURCE_READY_FOR_TRANSMISSION' : 'DRAG_AND_DROP_LEGAL_ASSETS_HERE_OR_CLICK_TO_SCAN'}
                 </p>
-                <p style={{ color:'#444', fontSize:'0.7rem', fontWeight:800, fontFamily: 'var(--font-mono)' }}>JPG | PNG | PDF | TIFF | BMP  ::  MAX_LIMIT_20MB</p>
+                <div className="flex gap-2 justify-center mt-6">
+                  {['JPG','PNG','PDF','TIFF','BMP'].map(fmt => (
+                    <span key={fmt} className="text-[10px] font-mono tracking-wider bg-white/5 border border-white/10 px-2 py-1 rounded text-gray-400">
+                      {fmt}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </Card>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="analysis"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
+          >
+            {/* Fake Terminal & Progress */}
+            <Card className="flex flex-col border-cyber-cyan/30 shadow-[0_0_30px_rgba(0,229,255,0.1)] relative overflow-hidden">
+              <div className="absolute inset-0 cyber-grid opacity-10 animate-scanline pointer-events-none" />
+              
+              <h3 className="text-sm font-bold font-hud tracking-widest text-cyber-cyan mb-6 flex items-center gap-2 relative z-10">
+                <Terminal size={18} />
+                LIVE_ANALYSIS_STREAM
+              </h3>
+              
+              {/* Stepper */}
+              <div className="flex flex-col gap-4 mb-8 relative z-10">
+                {PHASES.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className={`
+                      w-6 h-6 rounded-full flex items-center justify-center border text-[10px] font-bold font-mono transition-colors
+                      ${i < phaseIndex ? 'bg-cyber-green text-black border-cyber-green' : 
+                        i === phaseIndex ? 'bg-cyber-cyan/20 text-cyber-cyan border-cyber-cyan shadow-[0_0_10px_rgba(0,229,255,0.5)]' : 
+                        'bg-obsidian-900 text-gray-600 border-white/10'}
+                    `}>
+                      {i < phaseIndex ? <CheckCircle size={12} /> : i + 1}
+                    </div>
+                    <span className={`text-xs font-mono tracking-widest ${i <= phaseIndex ? 'text-white' : 'text-gray-600'}`}>{p}</span>
+                    {i === phaseIndex && <Loader size="sm" className="ml-auto scale-50" />}
+                  </div>
+                ))}
+              </div>
 
-        {files.length > 0 && (
-          <div className="card" style={{ gridColumn: 'span 2' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'var(--sp-6)', borderBottom: '1px solid #111', paddingBottom: 'var(--sp-3)' }}>
-              <h3 style={{ fontSize: '0.8rem', color:'var(--neon-cyan)', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>TRANSMISSION_QUEUE [{files.length}]</h3>
-              {!uploading && <button className="btn btn-secondary btn-sm" onClick={clear} style={{ fontSize: '0.65rem' }}>ABORT_ALL</button>}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
-              {files.map((item, i) => (
-                <FileRow key={i} {...item} onNavigate={(id) => navigate(`/results/${id}`)} />
+              {/* Terminal Logs */}
+              <div className="mt-auto bg-black border border-white/10 rounded overflow-hidden relative z-10 h-40 flex flex-col justify-end p-4 font-mono text-[10px] text-cyber-green/80">
+                {logs.map((log, i) => (
+                  <motion.div key={i} initial={{ opacity:0, x:-5 }} animate={{ opacity:1, x:0 }}>
+                    {log}
+                  </motion.div>
+                ))}
+                <div className="w-2 h-3 bg-cyber-green animate-pulse mt-1" />
+              </div>
+            </Card>
+
+            {/* Skeleton Loading Panel */}
+            <Card className="flex flex-col gap-6">
+              <h3 className="text-sm font-bold font-hud tracking-widest text-white mb-2">NEURAL_DECONSTRUCTION</h3>
+              
+              {/* Skeleton Cards */}
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white/5 rounded border border-white/5 p-4 flex gap-4 overflow-hidden relative">
+                  <motion.div 
+                    animate={{ x: ['-100%', '200%'] }} 
+                    transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                    className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"
+                  />
+                  <div className="w-12 h-12 bg-white/10 rounded shrink-0" />
+                  <div className="flex-1 flex flex-col justify-center gap-2">
+                    <div className="h-3 w-3/4 bg-white/10 rounded" />
+                    <div className="h-2 w-1/2 bg-white/10 rounded" />
+                  </div>
+                </div>
               ))}
-            </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* File Buffer */}
+      {files.length > 0 && !uploading && (
+        <Card className="mb-8">
+          <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+            <h3 className="font-hud font-bold tracking-widest text-white uppercase">TRANSMISSION_BUFFER [{files.length}]</h3>
+            <Button variant="danger" size="sm" onClick={clear}>PURGE</Button>
           </div>
-        )}
-      </div>
+          <div className="flex flex-col gap-3">
+             {files.map((item, i) => (
+               <div key={i} className={`
+                 flex items-center gap-4 p-3 rounded bg-obsidian-900 border-l-2
+                 ${item.status === 'done' ? 'border-cyber-green' : item.status === 'error' ? 'border-cyber-red' : 'border-cyber-cyan'}
+               `}>
+                 <FileText size={18} className={item.status === 'done' ? 'text-cyber-green' : 'text-cyber-cyan'} />
+                 <div className="flex-1 min-w-0">
+                   <div className="text-xs font-bold text-gray-300 font-mono truncate uppercase">{item.file.name}</div>
+                   <div className="text-[10px] text-gray-500 font-mono mt-1">{(item.file.size/1024/1024).toFixed(2)} MB</div>
+                 </div>
+                 {item.status === 'done' && item.docId && (
+                   <Button size="sm" onClick={() => navigate(`/results/${item.docId}`)}>OPEN_REPORT</Button>
+                 )}
+               </div>
+             ))}
+          </div>
+        </Card>
+      )}
 
-      <div style={{ display:'flex', gap:'var(--sp-4)', alignItems:'center', marginTop: 'var(--sp-6)' }}>
-        {idleCount > 0 && (
-          <button className="btn btn-lg" onClick={uploadAll} disabled={uploading}>
-            <Zap size={18} />
-            {uploading ? 'TRANSMITTING...' : `EXECUTE_ANALYSIS [${idleCount}]`}
-          </button>
+      {/* Action Bar */}
+      <div className="flex gap-4 items-center">
+        {idleCount > 0 && !uploading && (
+          <Button onClick={uploadAll} className="w-64">
+            <Zap size={18} className="mr-2" />
+            EXECUTE DEEP SCAN
+          </Button>
         )}
-        {files.length > 0 && files.some(f => f.status === 'done') && (
-          <button className="btn btn-secondary" onClick={() => navigate('/dashboard')}>
-            RETURN_TO_COMMAND_CENTER
-          </button>
-        )}
-      </div>
-
-      <div className="card" style={{ marginTop:'var(--sp-10)', borderTop: '2px solid #222' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-4)' }}>
-           <Cpu size={14} color="#555" />
-           <h4 style={{ fontWeight:800, color:'#555', fontSize:'0.75rem', fontFamily: 'var(--font-mono)' }}>ANALYSIS_PROTOCOLS_ACTIVE</h4>
-        </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))', gap:'var(--sp-3)' }}>
-          {['ERROR_LEVEL_ELA','CLONE_MAP_DETECTION','OCR_ANOMALY_SCAN','EXIF_METADATA_EXTRACT','XAI_HEATMAP_GEN','PDF_INTEGRITY_CHECK'].map(t => (
-            <div key={t} style={{ display:'flex', alignItems:'center', gap:'var(--sp-2)', fontSize:'0.65rem', color:'#333', fontFamily: 'var(--font-mono)' }}>
-              <span style={{ color:'var(--neon-green)' }}>[OK]</span> {t}
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   )

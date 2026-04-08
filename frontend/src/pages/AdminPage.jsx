@@ -9,7 +9,7 @@ function Tab({ label, active, onClick }) {
       padding:'var(--sp-2) var(--sp-4)',
       background: active ? 'rgba(0,255,65,0.1)' : 'transparent',
       color: active ? 'var(--neon-green)' : '#444',
-      border: active ? '1px solid var(--neon-green)' : '1px solid transparent',
+      boxShadow: active ? 'inset 0 0 0 1px var(--neon-green)' : 'none',
       cursor:'pointer',
       borderRadius: 0,
       fontWeight: 800,
@@ -77,7 +77,7 @@ export default function AdminPage() {
 
       {!loading && tab === 'users' && (
         <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', borderBottom: '1px solid #111', paddingBottom: 'var(--sp-3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', boxShadow: 'inset 0 -1px 0 var(--border-ghost)', paddingBottom: 'var(--sp-3)' }}>
             <Users size={16} color="var(--neon-cyan)" />
             <h3 style={{ fontSize: '0.85rem', color: 'var(--neon-cyan)' }}>ACTIVE_NODES [{users.length}]</h3>
           </div>
@@ -94,7 +94,7 @@ export default function AdminPage() {
                     <td className="mobile-hide" style={{ color:'#444', fontSize: '0.75rem' }}>{user.email}</td>
                     <td>
                       <select value={user.role} onChange={(e) => changeRole(user, e.target.value)}
-                        style={{ background:'#050505', border:'1px solid #222', color:'var(--neon-cyan)', fontSize:'0.65rem', padding:'2px 5px', cursor:'pointer', fontFamily: 'var(--font-mono)' }}>
+                        style={{ background:'var(--bg-hud)', color:'var(--neon-cyan)', fontSize:'0.65rem', padding:'2px 5px', cursor:'pointer', fontFamily: 'var(--font-mono)' }}>
                         <option value="admin">ADMIN</option>
                         <option value="reviewer">REVIEWER</option>
                         <option value="auditor">AUDITOR</option>
@@ -110,7 +110,7 @@ export default function AdminPage() {
                           fontSize:'0.6rem', padding: '0.2rem 0.5rem',
                           background: user.is_active ? 'rgba(255,0,0,0.1)' : 'rgba(0,255,65,0.1)',
                           color: user.is_active ? 'var(--neon-red)' : 'var(--neon-green)',
-                          border: `1px solid ${user.is_active ? 'var(--neon-red)' : 'var(--neon-green)'}`
+                          boxShadow: `inset 0 0 0 1px ${user.is_active ? 'var(--neon-red)' : 'var(--neon-green)'}`
                         }}>
                         {user.is_active ? 'TERMINATE' : 'RESTORE'}
                       </button>

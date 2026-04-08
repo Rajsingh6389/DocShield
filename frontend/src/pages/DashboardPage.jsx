@@ -1,36 +1,63 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi, documentsApi } from '../api/client'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { FileText, AlertTriangle, CheckCircle, Shield, TrendingUp, Clock, Upload, ArrowRight, Zap, Terminal, Activity, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { Activity, ShieldAlert, Zap, ShieldCheck, ArrowRight, Terminal } from 'lucide-react'
 import { format } from 'date-fns'
+import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { motion } from 'framer-motion'
+import { Loader } from '../components/ui/Loader'
 
-function StatCard({ icon: Icon, label, value, color, trend, isCritical }) {
+function StatCard({ icon: Icon, label, value, color, trend, isCritical, delay }) {
+  const shadowColor = isCritical ? 'rgba(255,0,60,0.1)' : color === 'var(--neon-green)' ? 'rgba(0,255,65,0.1)' : 'rgba(0,229,255,0.1)';
+  const borderClass = isCritical ? 'border-l-cyber-red' : color === 'var(--neon-green)' ? 'border-l-cyber-green' : color === 'var(--neon-yellow)' ? 'border-l-cyber-yellow' : 'border-l-cyber-cyan';
+  const textClass = isCritical ? 'text-cyber-red' : color === 'var(--neon-green)' ? 'text-cyber-green' : color === 'var(--neon-yellow)' ? 'text-cyber-yellow' : 'text-cyber-cyan';
+
   return (
-    <div className="card" style={{ 
-      display:'flex', flexDirection: 'column', gap:'var(--sp-3)', 
-      borderLeft:`2px solid ${color}`,
-      position: 'relative',
-      overflow: 'hidden',
-      background: isCritical ? 'rgba(255,0,0,0.02)' : 'rgba(0,0,0,0.4)'
-    }}>
-      {isCritical && <div className="blink" style={{ position:'absolute', top:5, right:10, fontSize:'0.5rem', color:'var(--neon-red)', fontWeight:900 }}>CRITICAL_SIGNAL</div>}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
-         <Icon size={14} color={color} />
-         <div style={{ fontSize:'0.65rem', color: '#555', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>{label}</div>
-      </div>
-      <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between' }}>
-        <div style={{ fontSize:'1.75rem', fontWeight:900, color: color, textShadow: `0 0 10px ${color}44`, fontFamily: 'var(--font-mono)' }}>
-          {value ?? '0x00'}
-        </div>
-        {trend && (
-          <div style={{ fontSize:'0.55rem', color: isCritical ? 'var(--neon-red)' : '#444', fontWeight:800, fontFamily: 'var(--font-mono)' }}>
-            [{trend}]
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+    >
+      <Card hover 
+        className={`flex flex-col gap-3 border-l-[4px] ${borderClass} h-full ${isCritical ? 'bg-cyber-red/5' : ''}`}
+      >
+        {isCritical && (
+          <div className="absolute top-2 right-3 text-[10px] text-cyber-red font-bold animate-pulse">
+            CRITICAL_SIGNAL
           </div>
         )}
-      </div>
-    </div>
+        <div className="flex items-center gap-2">
+           <Icon size={16} className={textClass} />
+           <div className="text-xs text-gray-400 font-bold uppercase tracking-widest font-mono">{label}</div>
+        </div>
+        <div className="flex items-end justify-between mt-auto">
+          <div className={`text-3xl font-black font-mono leading-none ${textClass} drop-shadow-[0_0_10px_currentColor]`}>
+            {value ?? '0x00'}
+          </div>
+          {trend && (
+            <div className={`text-[10px] font-bold font-mono ${isCritical ? 'text-cyber-red' : 'text-gray-500'}`}>
+              [{trend}]
+            </div>
+          )}
+        </div>
+      </Card>
+    </motion.div>
   )
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0 }
 }
 
 export default function DashboardPage() {
@@ -47,127 +74,159 @@ export default function DashboardPage() {
   }, [])
 
   const pieData = stats ? [
-    { name: 'AUTHENTIC', value: stats.authentic, color: 'var(--neon-green)' },
-    { name: 'SUSPICIOUS', value: stats.suspicious, color: 'var(--neon-yellow)' },
-    { name: 'FORGED', value: stats.forged, color: 'var(--neon-red)' },
+    { name: 'AUTHENTIC', value: stats.authentic, color: '#00FF41' },
+    { name: 'SUSPICIOUS', value: stats.suspicious, color: '#F3FF00' },
+    { name: 'FORGED', value: stats.forged, color: '#FF003C' },
   ].filter(d => d.value > 0) : []
 
   return (
-    <div className="fade-in scanline" style={{ position: 'relative' }}>
-      <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-2)' }}>
-          <Terminal size={14} color="var(--neon-green)" />
-          <span style={{ fontSize: '0.65rem', color: '#555', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>UPLINK_ESTABLISHED :: SESSION_ACTIVE</span>
+    <div className="relative">
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <Terminal size={14} className="text-cyber-green" />
+          <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">Uplink_Established :: Session_Active</span>
         </div>
-        <h2 className="glitch" style={{ fontSize: '1.75rem', fontWeight: 900 }}>DASHBOARD_OVERVIEW</h2>
-        <p className="page-subtitle typewriter" style={{ width: 'fit-content' }}>MONITORING_NETWORK_INTEGRITY_AND_DOCUMENT_TELEMETRY</p>
+        <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow">DASHBOARD_OVERVIEW</h2>
+        <p className="text-gray-400 text-sm font-mono mt-1 opacity-80">MONITORING_NETWORK_INTEGRITY_AND_DOCUMENT_TELEMETRY</p>
       </div>
 
-      {/* Stats grid */}
-      <div className="responsive-grid" style={{ marginBottom:'var(--sp-8)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--sp-4)' }}>
-        <StatCard 
-          label="SAMPLES_ANALYZED" 
-          value={stats?.total_documents} 
-          icon={Activity} 
-          color="var(--neon-cyan)" 
-          trend="+12%_SYNC"
-        />
-        <StatCard 
-          label="FORGERIES_BLOCKED" 
-          value={stats?.forged} 
-          icon={ShieldAlert} 
-          color="var(--neon-red)" 
-          trend="CRITICAL"
-          isCritical
-        />
-        <StatCard 
-          label="SUSPICIOUS_NODES" 
-          value={stats?.suspicious} 
-          icon={Zap} 
-          color="var(--neon-yellow)" 
-          trend="WARNING"
-        />
-        <StatCard 
-          label="AUTHENTIC_VERIFIED" 
-          value={stats?.authentic} 
-          icon={ShieldCheck} 
-          color="var(--neon-green)" 
-          trend="SECURE"
-        />
-      </div>
-
-      <div className="dashboard-grid">
-        {/* Recent documents */}
-        <div className="card" style={{ gridArea: 'table' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'var(--sp-6)', borderBottom: '1px solid var(--border)', paddingBottom: 'var(--sp-3)' }}>
-            <h3 style={{ fontSize: '0.9rem', color:'var(--neon-green)' }}>RECENT_TRANSFERS</h3>
-            <button className="btn btn-sm" onClick={() => navigate('/upload')}>
-              UPLOAD_NEW <ArrowRight size={14} />
-            </button>
+      {loading ? (
+        <div className="flex justify-center py-20">
+             <Loader size="lg" text="GATHERING_TELEMETRY..." />
+        </div>
+      ) : (
+        <>
+          {/* Stats grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard 
+              label="SAMPLES_ANALYZED" 
+              value={stats?.total_documents} 
+              icon={Activity} 
+              color="var(--neon-cyan)" 
+              trend="+12%_SYNC"
+              delay={0.1}
+            />
+            <StatCard 
+              label="FORGERIES_BLOCKED" 
+              value={stats?.forged} 
+              icon={ShieldAlert} 
+              color="var(--neon-red)" 
+              trend="CRITICAL"
+              isCritical
+              delay={0.2}
+            />
+            <StatCard 
+              label="SUSPICIOUS_NODES" 
+              value={stats?.suspicious} 
+              icon={Zap} 
+              color="var(--neon-yellow)" 
+              trend="WARNING"
+              delay={0.3}
+            />
+            <StatCard 
+              label="AUTHENTIC_VERIFIED" 
+              value={stats?.authentic} 
+              icon={ShieldCheck} 
+              color="var(--neon-green)" 
+              trend="SECURE"
+              delay={0.4}
+            />
           </div>
-          
-          {loading ? (
-            [...Array(5)].map((_, i) => <div key={i} className="skeleton" style={{ height:40, marginBottom:'var(--sp-2)' }} />)
-          ) : docs.length === 0 ? (
-            <div style={{ textAlign:'center', padding:'var(--sp-12)', color:'#333' }}>
-              <p>[ NO_DATA_AVAILABLE ]</p>
-            </div>
-          ) : (
-            <div className="table-wrap">
-              <table>
-                <thead><tr>
-                  <th>FILENAME</th><th className="mobile-hide">TYPE</th><th>STATUS</th><th>TIMESTAMP</th><th></th>
-                </tr></thead>
-                <tbody>
-                  {docs.map(doc => (
-                    <tr key={doc.id} onClick={() => navigate(`/results/${doc.id}`)}>
-                      <td style={{ color: 'var(--neon-cyan)', fontWeight: 600 }}>{doc.original_filename}</td>
-                      <td className="mobile-hide"><span style={{ color: '#555' }}>{doc.doc_type || 'RAW'}</span></td>
-                      <td><span className={`badge badge-${doc.status}`}>{doc.status}</span></td>
-                      <td style={{ color:'#444' }}>
-                        {doc.uploaded_at ? format(new Date(doc.uploaded_at), 'HH:mm:ss') : '--:--:--'}
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <ArrowRight size={14} color="#333" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
 
-        {/* Pie chart */}
-        <div className="card" style={{ gridArea: 'chart' }}>
-          <h3 style={{ fontSize: '0.9rem', color:'var(--neon-green)', marginBottom:'var(--sp-6)' }}>THREAT_LEVEL_DIST</h3>
-          {pieData.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" innerRadius={60} outerRadius={80} paddingAngle={5} stroke="none">
-                    {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ background: '#000', border: '1px solid var(--border)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)' }}
-                    itemStyle={{ color: 'var(--neon-green)' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{ display:'flex', flexDirection:'column', gap:'var(--sp-3)', marginTop:'var(--sp-4)' }}>
-                {pieData.map(d => (
-                  <div key={d.name} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', borderLeft: `2px solid ${d.color}`, paddingLeft: 'var(--sp-3)' }}>
-                    <span style={{ fontSize:'0.7rem', color: '#555' }}>{d.name}</span>
-                    <span style={{ fontWeight:700, color: d.color, fontSize:'0.8rem' }}>{d.value}</span>
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Recent documents */}
+            <Card className="lg:col-span-2 overflow-hidden flex flex-col">
+              <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
+                <h3 className="text-sm font-hud font-bold tracking-widest text-white">RECENT_TRANSFERS</h3>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/upload')} className="text-[10px]">
+                  UPLOAD_NEW <ArrowRight size={14} className="ml-1" />
+                </Button>
               </div>
-            </>
-          ) : (
-            <div style={{ textAlign:'center', padding:'var(--sp-8)', color:'#333' }}>[ NULL ]</div>
-          )}
-        </div>
-      </div>
+              
+              {docs.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 font-mono text-sm">
+                  [ NO_DATA_AVAILABLE ]
+                </div>
+              ) : (
+                <div className="overflow-x-auto flex-1">
+                  <table className="w-full text-left font-mono text-xs md:text-sm">
+                    <thead>
+                      <tr className="border-b-2 border-white/5 text-gray-500">
+                        <th className="pb-4 font-bold tracking-wider">FILENAME</th>
+                        <th className="pb-4 font-bold tracking-wider hidden md:table-cell">TYPE</th>
+                        <th className="pb-4 font-bold tracking-wider">STATUS</th>
+                        <th className="pb-4 font-bold tracking-wider">TIMESTAMP</th>
+                        <th className="pb-4"></th>
+                      </tr>
+                    </thead>
+                    <motion.tbody variants={containerVariants} initial="hidden" animate="show" className="text-gray-300">
+                      {docs.map(doc => (
+                        <motion.tr 
+                          variants={itemVariants}
+                          key={doc.id} 
+                          onClick={() => navigate(`/results/${doc.id}`)}
+                          className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors group"
+                        >
+                          <td className="py-4 text-cyber-cyan font-semibold truncate max-w-[150px] md:max-w-xs pr-4">{doc.original_filename}</td>
+                          <td className="py-4 hidden md:table-cell text-gray-500">{doc.doc_type || 'RAW'}</td>
+                          <td className="py-4">
+                            <span className={`
+                              px-2 py-1 text-[10px] font-bold tracking-widest rounded uppercase
+                              ${doc.status === 'authentic' ? 'bg-cyber-green/10 text-cyber-green border border-cyber-green/30' : 
+                                doc.status === 'forged' ? 'bg-cyber-red/10 text-cyber-red border border-cyber-red/30' : 
+                                'bg-cyber-yellow/10 text-cyber-yellow border border-cyber-yellow/30'}
+                            `}>
+                              {doc.status}
+                            </span>
+                          </td>
+                          <td className="py-4 text-gray-500">
+                            {doc.uploaded_at ? format(new Date(doc.uploaded_at), 'HH:mm:ss') : '--:--:--'}
+                          </td>
+                          <td className="py-4 text-right pr-4">
+                            <ArrowRight size={14} className="inline-block text-gray-600 group-hover:text-cyber-green transition-colors" />
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </motion.tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+
+            {/* Pie chart */}
+            <Card className="flex flex-col">
+              <h3 className="text-sm font-hud font-bold tracking-widest text-cyber-green mb-6 pb-4 border-b border-white/5">THREAT_LEVEL_DIST</h3>
+              {pieData.length > 0 ? (
+                <div className="flex-1 flex flex-col justify-center">
+                  <div className="h-[200px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={pieData} dataKey="value" innerRadius={60} outerRadius={80} paddingAngle={5} stroke="none">
+                          {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ background: 'rgba(10,15,13,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', fontSize: '12px', fontFamily: 'JetBrains Mono' }}
+                          itemStyle={{ color: '#00FF41' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-col gap-4 mt-6">
+                    {pieData.map(d => (
+                      <div key={d.name} className="flex items-center justify-between pl-3 border-l-2" style={{ borderLeftColor: d.color }}>
+                        <span className="text-xs font-mono font-bold tracking-widest text-gray-400">{d.name}</span>
+                        <span className="font-bold text-sm" style={{ color: d.color }}>{d.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500 font-mono text-sm">[ NULL ]</div>
+              )}
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -147,7 +147,7 @@ export default function BlockchainPage() {
                   width:60, height:60, borderRadius:0, 
                   background: result.verified ? 'rgba(0,255,65,0.05)' : 'rgba(255,49,49,0.05)',
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  border: `1px solid ${result.verified ? 'var(--neon-green)' : 'var(--neon-red)'}`,
+                  boxShadow: `inset 0 0 0 1px ${result.verified ? 'var(--neon-green)' : 'var(--neon-red)'}`,
                   boxShadow: result.verified ? 'var(--glow-green)' : 'var(--glow-red)'
                 }}>
                    {result.verified ? <ShieldCheck size={32} color="var(--neon-green)" /> : <ShieldAlert size={32} color="var(--neon-red)" />}
@@ -169,7 +169,7 @@ export default function BlockchainPage() {
                    <p style={{ color:'#888', fontSize:'0.75rem', lineHeight:1.5 }}>{result.message}</p>
                    
                    {result.verified && (
-                     <div style={{ marginTop:'var(--sp-4)', padding:'var(--sp-3)', background:'#050505', border:'1px solid #111' }}>
+                     <div style={{ marginTop:'var(--sp-4)', padding:'var(--sp-3)', background:'var(--bg-card-h)', boxShadow:'inset 0 0 0 1px var(--border-ghost)' }}>
                         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                            <Terminal size={12} color="var(--neon-cyan)" />
                            <span style={{ fontSize:'0.6rem', color:'var(--neon-cyan)', fontWeight:800, fontFamily: 'var(--font-mono)' }}>BLOCKCHAIN_TX_DATA</span>

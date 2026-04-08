@@ -2,58 +2,66 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { analysisApi, documentsApi } from '../api/client'
 import { getWsStatusUrl, API_BASE_URL } from '../urls/api'
-import { Download, RefreshCw, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Eye, Zap, Shield, FileText, Cpu, Terminal } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { Download, ArrowLeft, Eye, Zap, Shield, FileText, Cpu, Terminal, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { Loader } from '../components/ui/Loader'
 
 const VERDICT_CONFIG = {
-  authentic:  { color:'var(--neon-green)',  icon:'[ SECURE ]', label:'AUTHENTIC' },
-  suspicious: { color:'var(--neon-yellow)', icon:'[ WARNING ]', label:'SUSPICIOUS' },
-  forged:     { color:'var(--neon-red)',    icon:'[ MALICIOUS ]', label:'FORGED' },
-  pending:    { color:'#444',            icon:'[ SCANNING ]', label:'PENDING' },
+  authentic:  { color:'text-cyber-green',   bg:'bg-cyber-green/10',    border: 'border-cyber-green',    icon: CheckCircle, label:'AUTHENTIC' },
+  suspicious: { color:'text-cyber-yellow',  bg:'bg-cyber-yellow/10',   border: 'border-cyber-yellow',   icon: AlertTriangle, label:'SUSPICIOUS' },
+  forged:     { color:'text-cyber-red',     bg:'bg-cyber-red/10',      border: 'border-cyber-red',      icon: XCircle, label:'FORGED' },
+  pending:    { color:'text-gray-500',      bg:'bg-gray-500/10',       border: 'border-gray-500',       icon: Loader, label:'PENDING' },
 }
 
-function GaugeChart({ score }) {
+function GaugeChart({ score, colorClass }) {
   const pct = Math.min(Math.max(score || 0, 0), 100)
-  const color = pct < 35 ? 'var(--neon-green)' : pct < 65 ? 'var(--neon-yellow)' : 'var(--neon-red)'
-  const r = 60, stroke = 6, circ = 2 * Math.PI * r
+  const r = 60, stroke = 8, circ = 2 * Math.PI * r
   const offset = circ - (pct / 100) * circ
 
   return (
-    <div style={{ textAlign:'center', position: 'relative' }}>
-      <svg width={140} height={140} viewBox="0 0 160 160">
-        <circle cx={80} cy={80} r={r} fill="none" stroke="#111" strokeWidth={stroke} />
-        <circle cx={80} cy={80} r={r} fill="none" stroke={color} strokeWidth={stroke}
-          strokeDasharray={circ} strokeDashoffset={offset}
-          strokeLinecap="square" 
-          style={{ 
-            transformOrigin:'50% 50%', transform:'rotate(-90deg)', 
-            transition:'stroke-dashoffset 1s ease',
-            filter: `drop-shadow(0 0 5px ${color})`
-          }} />
-        <text x="50%" y="50%" textAnchor="middle" dy=".35em" fill={color} fontSize={28} fontWeight={900} fontFamily="var(--font-mono)">{pct.toFixed(0)}%</text>
+    <div className="relative flex flex-col items-center justify-center">
+      <svg width={160} height={160} viewBox="0 0 160 160" className="transform -rotate-90">
+        <circle cx={80} cy={80} r={r} fill="none" className="stroke-obsidian-700" strokeWidth={stroke} />
+        <motion.circle 
+          cx={80} cy={80} r={r} fill="none" 
+          className={colorClass.replace('text-', 'stroke-')} 
+          strokeWidth={stroke}
+          strokeDasharray={circ} 
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          strokeLinecap="round"
+          style={{ filter: 'drop-shadow(0 0 8px currentColor)' }}
+        />
       </svg>
-      <div style={{ fontSize: '0.6rem', color: '#444', fontWeight: 700, marginTop: -10 }}>THREAT_INDEX</div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className={`text-4xl font-black font-mono tracking-tighter ${colorClass} drop-shadow-[0_0_10px_currentColor]`}>{pct.toFixed(0)}</span>
+        <span className="text-[10px] text-gray-500 font-bold tracking-widest mt-1">SCORE</span>
+      </div>
     </div>
   )
 }
 
 function SignalBar({ signal }) {
   const pct = (signal.score * 100).toFixed(1)
-  const color = signal.score < 0.2 ? 'var(--neon-green)' : signal.score < 0.4 ? 'var(--neon-cyan)' : signal.score < 0.65 ? 'var(--neon-yellow)' : 'var(--neon-red)'
+  const colorClass = signal.score < 0.2 ? 'bg-cyber-green' : signal.score < 0.4 ? 'bg-cyber-cyan' : signal.score < 0.65 ? 'bg-cyber-yellow' : 'bg-cyber-red'
+  const textClass = signal.score < 0.2 ? 'text-cyber-green' : signal.score < 0.4 ? 'text-cyber-cyan' : signal.score < 0.65 ? 'text-cyber-yellow' : 'text-cyber-red'
+
   return (
-    <div style={{ marginBottom:'var(--sp-4)' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-        <span style={{ fontSize:'0.7rem', fontWeight:700, color:'#555', textTransform: 'uppercase' }}>{signal.name}</span>
-        <div style={{ display:'flex', alignItems:'center', gap:'var(--sp-2)' }}>
-          <span style={{ fontSize:'0.7rem', color: color, fontWeight: 700 }}>{pct}%</span>
-        </div>
+    <div className="mb-4 last:mb-0">
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-mono">{signal.name}</span>
+        <span className={`text-[10px] font-bold ${textClass}`}>{pct}%</span>
       </div>
-      <div style={{ height:4, background:'#111', overflow:'hidden', border: '1px solid #222' }}>
-        <div style={{ 
-          height:'100%', width:`${pct}%`, background:color, 
-          transition:'width 1s ease',
-          boxShadow: `0 0 8px ${color}88`
-        }} />
+      <div className="h-1.5 bg-obsidian-900 rounded-full overflow-hidden border border-white/5">
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          className={`h-full ${colorClass} shadow-[0_0_8px_currentColor]`}
+        />
       </div>
     </div>
   )
@@ -65,7 +73,7 @@ export default function ResultsPage() {
   const [doc, setDoc] = useState(null)
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [showHeatmap, setShowHeatmap] = useState(true) // Show fraud overlay by default
+  const [showHeatmap, setShowHeatmap] = useState(true)
   const [polling, setPolling] = useState(false)
   const ws = useRef(null)
   const apiBase = API_BASE_URL.replace(/\/api$/, '')
@@ -127,207 +135,187 @@ export default function ResultsPage() {
     };
   }, [id])
 
-  if (loading) return (
-    <div style={{ display:'flex', flexDirection: 'column', alignItems:'center', justifyContent: 'center', padding:'var(--sp-12)', gap: 'var(--sp-4)' }}>
-      <RefreshCw size={32} className="spin" color="var(--neon-green)" />
-      <div style={{ fontSize: '0.8rem', color: 'var(--neon-green)', fontFamily: 'var(--font-mono)' }}>INITIATING_SEQUENCE...</div>
-    </div>
-  )
+  if (loading || polling || !result) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
+        <Loader size="lg" text={polling ? 'ANALYSIS_IN_PROGRESS...' : 'INITIATING_UPLINK...'} />
+      </div>
+    )
+  }
 
   const verdict = result?.verdict || 'pending'
   const vc = VERDICT_CONFIG[verdict] || VERDICT_CONFIG.pending
+  const VerdictIcon = vc.icon
 
   return (
-    <div className="fade-in">
-      <div style={{ display:'flex', alignItems:'flex-start', flexWrap: 'wrap', gap:'var(--sp-4)', marginBottom:'var(--sp-8)' }}>
-        <button className="btn btn-secondary btn-sm" onClick={() => navigate(-1)} style={{ padding: '0.4rem' }}>
-          <ArrowLeft size={14}/> BACK
-        </button>
-        <div style={{ flex:1, minWidth: 200 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-1)' }}>
-            <Shield size={14} color="var(--neon-green)" />
-            <span style={{ fontSize: '0.65rem', color: '#555', fontWeight: 700 }}>VERIFICATION_ID: {id?.slice(0,12)}</span>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="pb-24"
+    >
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-white/5 pb-6">
+        <div>
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-6 -ml-4 z-40 relative px-0 hover:px-2">
+            <ArrowLeft size={16} className="mr-2" /> [ BACK ]
+          </Button>
+          <div className="flex items-center gap-2 mb-2">
+            <Shield size={14} className="text-cyber-green" />
+            <span className="text-[10px] font-mono text-cyber-cyan tracking-widest">SESSION_ID: {id?.slice(0,12)}</span>
           </div>
-          <h2 className="glitch" style={{ fontSize: '1.5rem', fontWeight: 900 }}>ANALYSIS_REPORT :: {id.slice(0, 8).toUpperCase()}</h2>
-          <p className="page-subtitle typewriter" style={{ width: 'fit-content' }}>NEURAL_SCAN_COMPLETED_ON_TARGET_ASSET</p>
-          {doc && <p className="page-subtitle" style={{ color: 'var(--neon-cyan)' }}>{doc.original_filename}</p>}
+          <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow uppercase">ANALYSIS_REPORT_v3</h2>
+          {doc && <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">SOURCE: {doc.original_filename}</p>}
         </div>
+        
         {result?.report_url && (
-          <a href={result.report_url.startsWith('http') ? result.report_url : `${apiBase}${result.report_url}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm">
-            <Download size={14}/> DOWNLOAD_RAW
-          </a>
+          <Button 
+            onClick={() => window.open(result.report_url.startsWith('http') ? result.report_url : `${apiBase}${result.report_url}`, '_blank')}
+            className="shrink-0"
+          >
+            <Download size={16} className="mr-2" /> EXPORT_BINARY_REPORT
+          </Button>
         )}
       </div>
 
-      {polling && (
-        <div style={{ display:'flex', alignItems:'center', gap:'var(--sp-3)', padding:'var(--sp-4)', background:'rgba(0,255,65,0.05)', border:'1px solid var(--neon-green)', marginBottom:'var(--sp-6)', borderRadius: 0 }}>
-          <RefreshCw size={16} className="spin" color="var(--neon-green)" />
-          <span style={{ color:'var(--neon-green)', fontSize:'0.75rem', fontWeight:700, fontFamily: 'var(--font-mono)' }}>
-            SYSTEM::SCANNING_IN_PROGRESS... TELEMETRY_AUTO_REFRESH_ENABLED
-          </span>
-        </div>
-      )}
-
-      {result ? (
-        <div style={{ display:'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap:'var(--sp-8)' }}>
-          {/* Left: Score + signals */}
-          <div style={{ display:'flex', flexDirection:'column', gap:'var(--sp-6)' }}>
-            <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--sp-10)', borderBottom: `2px solid ${vc.color}` }}>
-              <GaugeChart score={result.fraud_score} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.7rem', color: '#444', fontWeight: 700, marginBottom: 'var(--sp-2)' }}>VERDICT</div>
-                <div style={{ fontSize:'1.25rem', fontWeight:900, color:vc.color, textShadow: `0 0 10px ${vc.color}44` }}>
-                  {vc.icon} {vc.label}
-                </div>
-                <div style={{ marginTop:'var(--sp-4)', fontSize:'0.75rem', color:'#555' }}>
-                   DETECTED_CLASS: <span style={{ color:'#ccc' }}>{result.forgery_type?.replace(/_/g,' ').toUpperCase()}</span>
-                </div>
-                {result.processing_time_seconds && (
-                   <div style={{ fontSize:'0.65rem', color:'#333', marginTop:'var(--sp-2)' }}>
-                      TIME_TO_VERIFY: {result.processing_time_seconds}S
-                   </div>
-                )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* Left Column: Verdict & Details */}
+        <div className="lg:col-span-5 flex flex-col gap-8">
+          
+          {/* Main Verdict Card */}
+          <Card className={`border-l-4 ${vc.border} ${vc.bg} relative overflow-hidden flex flex-col sm:flex-row items-center gap-8 p-8`}>
+            {/* Background glow */}
+            <div className={`absolute -right-20 -top-20 w-64 h-64 rounded-full blur-[100px] pointer-events-none opacity-20 ${vc.bg.replace('/10', '')}`} />
+            
+            <GaugeChart score={result.fraud_score} colorClass={vc.color} />
+            
+            <div className="flex-1 flex flex-col justify-center text-center sm:text-left z-10">
+              <h3 className="text-xs font-bold font-hud tracking-widest text-gray-300 uppercase mb-2">THREAT_VERDICT</h3>
+              <div className={`text-2xl lg:text-3xl font-black tracking-widest ${vc.color} drop-shadow-[0_0_15px_currentColor] flex items-center justify-center sm:justify-start gap-3`}>
+                <VerdictIcon className="w-8 h-8" />
+                {vc.label}
+              </div>
+              <div className="mt-4 bg-black/50 border border-white/10 px-3 py-1.5 rounded inline-block self-center sm:self-start">
+                <span className="text-[10px] font-mono text-gray-400 font-bold uppercase tracking-widest">
+                  CLASS: {result.forgery_type?.replace(/_/g,' ') || 'CLEAN'}
+                </span>
               </div>
             </div>
+          </Card>
 
-            {/* AI Explainer Card */}
-            {result.ai_explainer && (
-              <div className="card" style={{ 
-                background: '#000', 
-                border: '1px solid var(--neon-green)', 
-                position: 'relative',
-                paddingTop: 'var(--sp-8)',
-                marginBottom: 'var(--sp-6)'
-              }}>
-                <div style={{ 
-                  position: 'absolute', top: 0, left: 0, right: 0, 
-                  height: '24px', background: 'rgba(0,255,65,0.1)', 
-                  display: 'flex', alignItems: 'center',
-                  borderBottom: '1px solid var(--neon-green)',
-                  padding: '0 var(--sp-3)',
-                  gap: 'var(--sp-2)'
-                }}>
-                  <Terminal size={10} color="var(--neon-green)" />
-                  <span style={{ fontSize: '0.6rem', color: 'var(--neon-green)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>AI_LOGIC_SESSION_ACTIVE</span>
-                </div>
-                
-                <div style={{ display: 'flex', gap: 'var(--sp-4)' }}>
-                  <div style={{ 
-                    width: '32px', height: '32px', borderRadius: '4px', 
-                    background: 'rgba(0,255,65,0.1)', display: 'flex', 
-                    alignItems: 'center', justifyContent: 'center',
-                    border: '1px solid var(--neon-green)',
-                    flexShrink: 0
-                  }}>
-                    <Cpu size={18} color="var(--neon-green)" className="pulse-neon" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: '0.75rem', marginBottom: 'var(--sp-3)', color: '#fff', letterSpacing: '2px' }}>AI_EXPLAINER_ENGINE</h3>
-                    <pre style={{ 
-                      whiteSpace: 'pre-wrap', 
-                      wordBreak: 'break-word',
-                      fontSize: '0.75rem', 
-                      color: 'var(--neon-green)', 
-                      fontFamily: 'var(--font-mono)',
-                      lineHeight: '1.4',
-                      background: 'rgba(0,255,65,0.02)',
-                      padding: 'var(--sp-3)',
-                      borderLeft: '2px solid var(--neon-green)',
-                      margin: 0
-                    }}>
-                      {result.ai_explainer}
-                    </pre>
-                  </div>
-                </div>
+          {/* AI Explainer */}
+          {result.ai_explainer && (
+            <Card className="border-t-2 border-cyber-cyan p-0 overflow-hidden">
+              <div className="bg-cyber-cyan/10 px-4 py-2 border-b border-cyber-cyan/20 flex items-center gap-2">
+                <Terminal size={14} className="text-cyber-cyan pulse" />
+                <span className="text-[10px] font-bold font-mono tracking-widest text-cyber-cyan uppercase">NEURAL_EXPLAINER_SYNC::READY</span>
               </div>
-            )}
+              <div className="p-6 bg-[rgba(0,255,65,0.02)]">
+                <p className="text-xs font-mono text-cyber-green leading-relaxed whitespace-pre-wrap">
+                  {result.ai_explainer}
+                </p>
+              </div>
+            </Card>
+          )}
 
-            <div className="card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)' }}>
-                <Zap size={14} color="var(--neon-green)" />
-                <h3 style={{ fontSize: '0.85rem', color:'var(--neon-green)' }}>SIGNAL_DECOMPOSITION</h3>
-              </div>
+          {/* Signals */}
+          <Card>
+            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+              <Zap size={16} className="text-cyber-yellow" />
+              <h3 className="text-sm font-bold font-hud tracking-widest text-white uppercase">TELEMETRY_DATA_STREAMS</h3>
+            </div>
+            <div className="flex flex-col gap-4">
               {result.signals?.map((s, i) => <SignalBar key={i} signal={s} />)}
             </div>
-          </div>
+          </Card>
 
-          {/* Right: Document viewer */}
-          <div style={{ display:'flex', flexDirection:'column', gap:'var(--sp-6)' }}>
-            <div className="card" style={{ minHeight:400, display:'flex', flexDirection:'column', border: '1px solid #222' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'var(--sp-4)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
-                  <Eye size={14} color="var(--neon-cyan)" />
-                  <h3 style={{ fontSize: '0.85rem', color:'var(--neon-cyan)' }}>VISUAL_INSPECTION</h3>
+        </div>
+
+        {/* Right Column: Visualizer & Metadata */}
+        <div className="lg:col-span-7 flex flex-col gap-8">
+          
+          <Card className="flex flex-col h-[600px] p-0 overflow-hidden border border-white/10">
+            <div className="flex items-center justify-between p-4 border-b border-white/10 bg-obsidian-800">
+              <div className="flex items-center gap-2">
+                <Eye size={16} className="text-cyber-cyan" />
+                <h3 className="text-sm font-bold font-hud tracking-widest text-cyber-cyan">VISUAL_SENSOR_ARRAY</h3>
+              </div>
+              {result.heatmap_url && (
+                <Button variant="secondary" size="sm" onClick={() => setShowHeatmap(!showHeatmap)}>
+                  {showHeatmap ? 'VIEW_RAW' : 'VIEW_ANOMALIES'}
+                </Button>
+              )}
+            </div>
+            
+            <div className="flex-1 bg-black relative flex items-center justify-center overflow-hidden grouped">
+              {/* Scanline overlay */}
+              <div className="absolute inset-0 cyber-grid opacity-10 animate-scanline pointer-events-none z-20" />
+              
+              {result.heatmap_url && showHeatmap ? (
+                <motion.img 
+                  initial={{ scale: 1.05, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  src={result.heatmap_url.startsWith('http') ? result.heatmap_url : `${apiBase}${result.heatmap_url}`} 
+                  alt="XAI Heatmap" 
+                  className="max-w-full max-h-full object-contain relative z-10 contrast-125" 
+                />
+              ) : (
+                <div className="text-center text-gray-600 flex flex-col items-center">
+                  <FileText size={64} className="mb-4 opacity-20" />
+                  <p className="text-xs font-mono tracking-widest">AWAITING_VISUAL_HANDSHAKE...</p>
                 </div>
-                {result.heatmap_url && (
-                  <button className="btn btn-secondary btn-sm" onClick={() => setShowHeatmap(!showHeatmap)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem' }}>
-                    {showHeatmap ? 'SWITCH_TO_ORIGINAL' : 'ENHANCE_HEATMAP'}
-                  </button>
-                )}
-              </div>
-              <div style={{ flex:1, background:'#050505', borderRadius: 0, border: '1px solid #111', display:'flex', alignItems:'center', justifyContent:'center', position: 'relative', overflow:'hidden' }}>
-                {result.heatmap_url && showHeatmap ? (
-                  <img src={result.heatmap_url.startsWith('http') ? result.heatmap_url : `${apiBase}${result.heatmap_url}`} alt="XAI Heatmap" style={{ maxWidth:'100%', maxHeight:500, filter: 'contrast(1.2) brightness(1.1)' }} />
-                ) : (
-                  <div style={{ textAlign:'center', color:'#333', padding:'var(--sp-8)' }}>
-                    <FileText size={48} style={{ marginBottom:'var(--sp-4)', opacity:0.1 }} />
-                    <p style={{ fontSize:'0.75rem', fontFamily: 'var(--font-mono)' }}>
-                      {result.heatmap_url ? 'CLICK "ENHANCE_HEATMAP" FOR ANOMALY_DETECTION' : 'PREVIEW_NOT_AVAILABLE'}
-                    </p>
-                  </div>
-                )}
-                <div style={{ position: 'absolute', top: 10, right: 10, fontSize: '0.5rem', color: '#222' }}>SCAN_LAYER_v2.1</div>
-                
-                {/* Visual Legend Overlay */}
-                {showHeatmap && result.heatmap_url && (
-                  <div style={{ 
-                    position:'absolute', bottom:10, left:10, 
-                    background:'rgba(0,0,0,0.8)', border:'1px solid #333', 
-                    padding:'6px 10px', fontSize:'0.6rem', color:'#888',
-                    display:'flex', gap:'12px', zIndex: 10,
-                    fontFamily: 'var(--font-mono)'
-                  }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                      <div style={{ width:8, height:8, background:'rgb(255, 165, 0)', boxShadow:'0 0 4px orange' }}></div> OCR
-                    </div>
-                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                      <div style={{ width:8, height:8, background:'rgb(255, 0, 0)', boxShadow:'0 0 4px red' }}></div> CLONE
-                    </div>
-                    <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                      <div style={{ width:8, height:8, background:'rgb(0, 255, 255)', boxShadow:'0 0 4px cyan' }}></div> HEATMAP
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+              )}
 
-            <div className="card">
-              <h3 style={{ fontSize: '0.85rem', color:'#555', marginBottom:'var(--sp-4)' }}>METADATA_EXTRACT</h3>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:'var(--sp-4)' }}>
-                {[
-                  ['DOC_TYPE', doc?.doc_type?.toUpperCase()],
-                  ['AUTH_STATUS', doc?.status?.toUpperCase()],
-                  ['PAYLOAD_SIZE', doc?.file_size ? `${(doc.file_size/1024).toFixed(1)} KB` : '---'],
-                  ['ENCODING', doc?.mime_type || 'RAW'],
-                ].map(([k,v]) => (
-                  <div key={k} style={{ border: '1px solid #111', padding:'var(--sp-3)', background: 'rgba(0,0,0,0.2)' }}>
-                    <div style={{ fontSize:'0.6rem', color:'#444', fontWeight:700 }}>{k}</div>
-                    <div style={{ fontSize:'0.75rem', color:'#999', fontWeight:600, marginTop:4, fontFamily: 'var(--font-mono)' }}>{v || 'NULL'}</div>
-                  </div>
-                ))}
-              </div>
+              {/* Legend */}
+              <AnimatePresence>
+                {showHeatmap && result.heatmap_url && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="absolute top-4 left-4 bg-black/80 backdrop-blur border border-cyber-cyan/30 p-3 rounded z-30 shadow-[0_0_15px_rgba(0,229,255,0.15)] flex flex-col gap-2"
+                  >
+                    <div className="text-[10px] font-bold font-mono text-cyber-cyan tracking-widest uppercase mb-1">SENSOR_LEGEND</div>
+                    <div className="flex items-center gap-2 text-[10px] text-white font-mono">
+                      <div className="w-2.5 h-2.5 bg-orange-500 rounded-full shadow-[0_0_5px_orange]" /> OCR_NOISE
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-white font-mono">
+                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full shadow-[0_0_5px_red]" /> RECLONE_PXL
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-white font-mono">
+                      <div className="w-2.5 h-2.5 bg-cyan-500 rounded-full shadow-[0_0_5px_cyan]" /> STRUCT_ANOMALY
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
+          </Card>
+
+          {/* Metadata */}
+          <Card>
+            <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+              <Cpu size={16} className="text-gray-400" />
+              <h3 className="text-sm font-bold font-hud tracking-widest text-gray-300 uppercase">SOURCE_METADATA</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { k: 'ASSET_TYPE', v: doc?.doc_type?.toUpperCase() },
+                { k: 'INTEGRITY', v: doc?.status?.toUpperCase() },
+                { k: 'FILE_BYTES', v: doc?.file_size ? `${(doc.file_size/1024).toFixed(1)} KB` : '---' },
+                { k: 'MIME_TYPE', v: doc?.mime_type || 'RAW' },
+              ].map(({k, v}, i) => (
+                <div key={k} className="bg-obsidian-900/50 border border-white/5 p-4 relative overflow-hidden rounded">
+                  <div className="absolute top-0 left-0 bottom-0 w-1 bg-cyber-cyan opacity-50" />
+                  <div className="text-[10px] font-bold text-gray-500 tracking-widest font-mono uppercase mb-1">{k}</div>
+                  <div className="text-xs font-bold text-gray-200 font-mono tracking-wider truncate uppercase">{v || 'NULL'}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
         </div>
-      ) : (
-        <div className="card" style={{ textAlign:'center', padding:'var(--sp-20)', border: '1px dashed #222' }}>
-          <RefreshCw size={40} className="spin" color="#222" style={{ marginBottom:'var(--sp-6)' }} />
-          <h3 style={{ color:'#444', fontSize:'0.9rem' }}>AWAITING_ANALYSIS_COMPLETION</h3>
-          <p style={{ color:'#222', fontSize:'0.7rem', marginTop:'var(--sp-3)', fontFamily: 'var(--font-mono)' }}>
-            CHANNEL_ACTIVE :: STREAMING_VIA_WEBSOCKET_01
-          </p>
-        </div>
-      )}
-    </div>
+      </div>
+    </motion.div>
   )
 }

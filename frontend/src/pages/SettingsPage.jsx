@@ -68,13 +68,13 @@ export default function SettingsPage() {
       </div>
 
       <div className="card" style={{ maxWidth: 600 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', borderBottom: '1px solid #111', paddingBottom: 'var(--sp-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', paddingBottom: 'var(--sp-3)', boxShadow: 'inset 0 -1px 0 var(--border-ghost)' }}>
           <Shield size={16} color="var(--neon-cyan)" />
           <h3 style={{ fontSize: '0.85rem', color: 'var(--neon-cyan)' }}>MULTI_FACTOR_AUTHENTICATION (MFA)</h3>
         </div>
 
         <div style={{ display: 'flex', gap: 'var(--sp-6)', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ width: 64, height: 64, background: '#050505', border: '1px solid #111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 64, height: 64, background: 'var(--bg-hud)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {user?.totp_enabled ? (
               <ShieldCheck size={32} color="var(--neon-green)" />
             ) : (
@@ -139,7 +139,7 @@ export default function SettingsPage() {
                       placeholder="ENTER_VERIF_TOKEN" 
                       value={verifyCode} 
                       onChange={(e) => setVerifyCode(e.target.value)} 
-                      style={{ background: '#111', border: '1px solid #222', fontSize: '0.75rem', textAlign: 'center' }}
+                      style={{ background: 'var(--bg-hud)', fontSize: '0.75rem', textAlign: 'center' }}
                       required 
                     />
                   </div>
@@ -154,7 +154,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Info Card */}
-      <div className="card" style={{ marginTop: 'var(--sp-8)', border: '1px solid rgba(0,255,65,0.05)' }}>
+      <div className="card glass-green fade-in" style={{ marginTop: 'var(--sp-8)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-4)' }}>
           <Smartphone size={14} color="#333" />
           <h4 style={{ fontSize: '0.7rem', color: '#333', fontWeight: 800 }}>RECOMMENDED_AUTHENTICATORS</h4>

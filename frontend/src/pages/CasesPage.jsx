@@ -60,7 +60,7 @@ export default function CasesPage() {
               onClick={() => setFilter(status)}
               style={{
                 background: filter === status ? 'rgba(0,255,65,0.1)' : 'transparent',
-                border: filter === status ? '1px solid var(--neon-green)' : '1px solid #111',
+                boxShadow: filter === status ? 'inset 0 0 0 1px var(--neon-green)' : 'inset 0 0 0 1px var(--border-ghost)',
                 color: filter === status ? 'var(--neon-green)' : '#333',
                 fontSize: '0.65rem',
                 padding: '4px 8px',
@@ -75,7 +75,7 @@ export default function CasesPage() {
       </div>
 
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', borderBottom: '1px solid #111', paddingBottom: 'var(--sp-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', boxShadow: 'inset 0 -1px 0 var(--border-ghost)', paddingBottom: 'var(--sp-3)' }}>
           <Terminal size={16} color="var(--neon-cyan)" />
           <h3 style={{ fontSize: '0.85rem', color: 'var(--neon-cyan)' }}>CURRENT_INCIDENT_STREAM</h3>
         </div>

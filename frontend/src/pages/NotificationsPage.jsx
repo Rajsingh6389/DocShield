@@ -70,7 +70,7 @@ export default function NotificationsPage() {
       </div>
 
       <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', borderBottom: '1px solid #111', paddingBottom: 'var(--sp-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', boxShadow: 'inset 0 -1px 0 var(--border-ghost)', paddingBottom: 'var(--sp-3)' }}>
           <Terminal size={16} color="var(--neon-cyan)" />
           <h3 style={{ fontSize: '0.85rem', color: 'var(--neon-cyan)' }}>LIVE_SIGNAL_FEED</h3>
         </div>
@@ -95,7 +95,7 @@ export default function NotificationsPage() {
                   gap: 'var(--sp-4)', 
                   padding: 'var(--sp-4)', 
                   background: n.is_read ? 'transparent' : 'rgba(0,255,65,0.02)',
-                  border: `1px solid ${n.is_read ? '#111' : '#222'}`,
+                  boxShadow: `inset 0 0 0 1px ${n.is_read ? 'transparent' : 'var(--border-ghost)'}`,
                   borderLeft: `2px solid ${n.is_read ? '#333' : 'var(--neon-green)'}`,
                   cursor: n.is_read ? 'default' : 'pointer',
                   transition: 'all 0.2s'

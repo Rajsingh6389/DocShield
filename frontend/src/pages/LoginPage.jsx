@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Eye, EyeOff, Lock, Mail, Terminal, Cpu, Activity } from 'lucide-react'
+import { Shield, Lock, Mail, User, ShieldAlert, Cpu } from 'lucide-react'
 import { authApi } from '../api/client'
 import { useAuthStore } from '../store/useStore'
 import toast from 'react-hot-toast'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Card } from '../components/ui/Card'
+import { Input } from '../components/ui/Input'
+import { Button } from '../components/ui/Button'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [mode, setMode] = useState('login') 
-  const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [tempData, setTempData] = useState(null)
   const [bootLines, setBootLines] = useState([])
@@ -36,7 +39,7 @@ export default function LoginPage() {
         clearInterval(interval)
         setTimeout(() => setShowLogin(true), 500)
       }
-    }, 120)
+    }, 100)
     return () => clearInterval(interval)
   }, [])
 
@@ -88,135 +91,192 @@ export default function LoginPage() {
 
   if (!showLogin) {
     return (
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:'#000', padding:'var(--sp-8)' }}>
-        <div style={{ width:'100%', maxWidth:400, fontFamily:'var(--font-mono)', fontSize:'0.75rem', color:'var(--neon-green)' }}>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black p-8 font-mono text-xs md:text-sm text-cyber-green relative overflow-hidden">
+        <div className="w-full max-w-lg z-10">
           {bootLines.map((line, idx) => (
-            <div key={idx} style={{ marginBottom: 10, opacity: 0.9 }}>{line}</div>
+            <motion.div 
+              key={idx} 
+              initial={{ opacity: 0, x: -10 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              className="mb-2"
+            >
+              {line}
+            </motion.div>
           ))}
-          <div className="typewriter" style={{ width:'fit-content' }}>_</div>
+          <motion.div animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="inline-block w-2 h-4 bg-cyber-green" />
         </div>
+        {/* Subtle background glow during boot */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,255,65,0.05)_0%,transparent_70%)] pointer-events-none" />
       </div>
     )
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0a0a0a',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 'var(--sp-6)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <div className="scanline" />
+    <div className="min-h-screen bg-obsidian-900 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+      {/* Animated Background */}
+      <div className="absolute inset-0 cyber-grid opacity-20 animate-matrix-rain pointer-events-none" />
       
-      <div className="card neon-border-flow" style={{ width:'100%', maxWidth:400, padding:'var(--sp-10)', background: 'rgba(0,0,0,0.9)', position:'relative', zIndex: 1 }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'var(--neon-green)', boxShadow: 'var(--glow-green)' }} />
+      {/* Decorative ambient light */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyber-cyan/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyber-green/5 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Main Glassmorphic Card */}
+      <Card className="w-full max-w-md z-10 border-t border-t-cyber-green/50">
         
-        <div style={{ textAlign: 'center', marginBottom: 'var(--sp-8)' }}>
-          <div style={{ display: 'inline-flex', padding: 8, background: 'var(--neon-green)', marginBottom: 16 }}>
-            <Shield size={32} color="#000" />
-          </div>
-          <h2 className="glitch" style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', letterSpacing: '0.2em' }}>DOCUSHIELD</h2>
-          <div style={{ fontSize: '0.65rem', color: 'var(--neon-green)', fontWeight: 800, marginTop: 4, fontFamily:'var(--font-mono)' }}>SECURITY_LOGIN_UPLINK::CORE</div>
+        {/* Header Section */}
+        <div className="flex flex-col items-center mb-8">
+          <motion.div 
+            initial={{ scale: 0 }} 
+            animate={{ scale: 1 }} 
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            className="w-16 h-16 rounded-2xl bg-cyber-green/10 flex items-center justify-center border border-cyber-green/30 shadow-[0_0_20px_rgba(0,255,65,0.2)] mb-4"
+          >
+            <Shield className="w-8 h-8 text-cyber-green" />
+          </motion.div>
+          
+          <h1 className="text-2xl md:text-3xl font-hud font-bold text-white tracking-widest text-center neon-text-glow">
+            DOCUSHIELD
+          </h1>
+          <p className="text-cyber-cyan text-xs font-mono tracking-[0.2em] mt-2 opacity-80 uppercase">
+            {mode === 'login' ? 'Security_Login_Uplink' : mode === 'register' ? 'New_Node_Initialization' : 'Multifactor_Challenge'}
+          </p>
         </div>
 
+        {/* Tab Navigation for Login / Register */}
         {mode !== '2fa' && (
-          <div style={{ display:'flex', gap:'var(--sp-4)', marginBottom:'var(--sp-8)', borderBottom:'1px solid #111', paddingBottom:'var(--sp-2)' }}>
-            {['login','register'].map(m => (
-              <button key={m} onClick={() => setMode(m)} style={{
-                background: 'none', border:'none', cursor:'pointer',
-                fontWeight: 900, fontSize:'0.7rem', transition:'all var(--t-fast)',
-                color: mode===m ? 'var(--neon-green)' : '#333',
-                fontFamily: 'var(--font-mono)',
-                textShadow: mode===m ? 'var(--glow-green)' : 'none'
-              }}>{m === 'login' ? '[ AUTH_LOGIN ]' : '[ NEW_NODE ]'}</button>
-            ))}
+          <div className="flex gap-4 mb-8 border-b border-white/5 pb-4">
+            <button
+              onClick={() => setMode('login')}
+              className={`flex-1 pb-2 text-sm font-hud font-bold tracking-widest uppercase transition-colors relative ${mode === 'login' ? 'text-cyber-green' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+              [ Authenticate ]
+              {mode === 'login' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyber-green drop-shadow-[0_0_8px_rgba(0,255,65,0.8)]" />}
+            </button>
+            <button
+              onClick={() => setMode('register')}
+              className={`flex-1 pb-2 text-sm font-hud font-bold tracking-widest uppercase transition-colors relative ${mode === 'register' ? 'text-cyber-green' : 'text-gray-500 hover:text-gray-300'}`}
+            >
+              [ Initialize ]
+              {mode === 'register' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-cyber-green drop-shadow-[0_0_8px_rgba(0,255,65,0.8)]" />}
+            </button>
           </div>
         )}
 
-        {loading ? (
-           <div style={{ textAlign: 'center', padding: 'var(--sp-8)' }}>
-             <div className="spin" style={{ width: 32, height: 32, border: '2px solid #111', borderTopColor: 'var(--neon-cyan)', margin: '0 auto var(--sp-4)' }} />
-             <div style={{ color: 'var(--neon-cyan)', fontSize: '0.7rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }} className="blink">
-               {mode === 'login' ? 'DECRYPTING_ACCESS_KEY...' : 'INITIALIZING_NEW_NODE...'}
-             </div>
-           </div>
-        ) : (
-          <>
+        {/* Forms */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
             {mode === 'login' && (
-              <form onSubmit={handleLogin}>
-                <div className="form-group">
-                  <label className="label" style={{ fontSize: '0.6rem', color: '#555' }}>IDENTIFIER</label>
-                  <div style={{ position:'relative' }}>
-                    <Mail size={14} style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#333' }} />
-                    <input className="input" style={{ paddingLeft:32, border: '1px solid #111', background: '#050505', color: 'var(--neon-cyan)', fontSize: '0.8rem' }} type="email" placeholder="USER@NET.IO" value={form.email} onChange={set('email')} required />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="label" style={{ fontSize: '0.6rem', color: '#555' }}>SECURITY_KEY</label>
-                  <div style={{ position:'relative' }}>
-                    <Lock size={14} style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#333' }} />
-                    <input className="input" style={{ paddingLeft:32, border: '1px solid #111', background: '#050505', color: 'var(--neon-cyan)', fontSize: '0.8rem' }} type={showPass ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={set('password')} required />
-                  </div>
-                </div>
-                <button className="btn btn-lg" type="submit" style={{ width:'100%', marginTop:'var(--sp-4)' }}>
-                  ESTABLISH_UPLINK
-                </button>
+              <form onSubmit={handleLogin} className="flex flex-col gap-5">
+                <Input
+                  label="Identifier"
+                  icon={Mail}
+                  type="email"
+                  placeholder="USER@NET.IO"
+                  value={form.email}
+                  onChange={set('email')}
+                  required
+                />
+                <Input
+                  label="Security Key"
+                  icon={Lock}
+                  type="password"
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={set('password')}
+                  required
+                />
+                <Button type="submit" isLoading={loading} className="w-full mt-4">
+                  ESTABLISH UPLINK
+                </Button>
               </form>
             )}
 
             {mode === 'register' && (
-              <form onSubmit={handleRegister}>
-                <div className="form-group">
-                  <label className="label" style={{ fontSize: '0.6rem', color: '#555' }}>FULL_NAME_ID</label>
-                  <input className="input" style={{ border: '1px solid #111', background: '#050505', color: 'var(--neon-cyan)', fontSize: '0.8rem' }} type="text" placeholder="NAME" value={form.full_name} onChange={set('full_name')} required minLength={2} />
-                </div>
-                <div className="form-group">
-                  <label className="label" style={{ fontSize: '0.6rem', color: '#555' }}>UPLINK_EMAIL</label>
-                  <input className="input" style={{ border: '1px solid #111', background: '#050505', color: 'var(--neon-cyan)', fontSize: '0.8rem' }} type="email" placeholder="USER@NET.IO" value={form.email} onChange={set('email')} required />
-                </div>
-                <div className="form-group">
-                  <label className="label" style={{ fontSize: '0.6rem', color: '#555' }}>ENCRYPTION_KEY</label>
-                  <input className="input" style={{ border: '1px solid #111', background: '#050505', color: 'var(--neon-cyan)', fontSize: '0.8rem' }} type={showPass ? 'text':'password'} placeholder="SECRET_PHRASE" value={form.password} onChange={set('password')} required minLength={8} />
-                </div>
-                <button className="btn btn-lg" type="submit" style={{ width:'100%', marginTop:'var(--sp-4)' }}>
-                  INITIALIZE_NODE
-                </button>
+              <form onSubmit={handleRegister} className="flex flex-col gap-5">
+                <Input
+                  label="Full Name ID"
+                  icon={User}
+                  type="text"
+                  placeholder="AGENT DESIGNATION"
+                  value={form.full_name}
+                  onChange={set('full_name')}
+                  required
+                  minLength={2}
+                />
+                <Input
+                  label="Uplink Email"
+                  icon={Mail}
+                  type="email"
+                  placeholder="USER@NET.IO"
+                  value={form.email}
+                  onChange={set('email')}
+                  required
+                />
+                <Input
+                  label="Encryption Key"
+                  icon={Lock}
+                  type="password"
+                  placeholder="SECRET_PHRASE"
+                  value={form.password}
+                  onChange={set('password')}
+                  required
+                  minLength={8}
+                />
+                <Button type="submit" isLoading={loading} className="w-full mt-4">
+                  INITIALIZE NODE
+                </Button>
               </form>
             )}
 
             {mode === '2fa' && (
-              <form onSubmit={handle2FA}>
-                <div style={{ textAlign:'center', marginBottom:'var(--sp-6)' }}>
-                  <Shield size={32} color="var(--neon-green)" style={{ marginBottom: 'var(--sp-4)' }} />
-                  <p style={{ color:'#555', fontSize:'0.7rem', fontFamily: 'var(--font-mono)' }}>MFA_TOKEN_REQUIRED</p>
+              <form onSubmit={handle2FA} className="flex flex-col gap-6">
+                <div className="text-center">
+                  <ShieldAlert className="w-12 h-12 text-cyber-green mx-auto mb-4" />
+                  <p className="text-gray-400 text-sm font-mono tracking-widest uppercase">MFA Challenge Required</p>
                 </div>
-                <div className="form-group">
-                  <input className="input" type="text" placeholder="000000" maxLength={6} value={form.totp_code} onChange={set('totp_code')} style={{ textAlign:'center', fontSize:'1.5rem', fontFamily:'var(--font-mono)', letterSpacing:'0.3em', background: '#050505', border: '1px solid #111', color: 'var(--neon-green)' }} required />
+                
+                <div className="flex flex-col items-center">
+                  <input 
+                    type="text" 
+                    placeholder="000000" 
+                    maxLength={6} 
+                    value={form.totp_code} 
+                    onChange={set('totp_code')} 
+                    className="w-full bg-obsidian-900/80 border border-white/10 rounded py-4 text-center text-3xl font-mono tracking-[0.5em] text-cyber-green focus:outline-none focus:border-cyber-cyan focus:ring-1 focus:ring-cyber-cyan transition-all"
+                    required 
+                  />
                 </div>
-                <button className="btn btn-lg" type="submit" style={{ width:'100%' }}>
-                  BYPASS_SECURITY
-                </button>
-                <button type="button" onClick={() => setMode('login')} style={{ width:'100%', marginTop:'var(--sp-4)', background:'none', border:'none', color:'#333', cursor:'pointer', fontSize:'0.65rem', fontFamily: 'var(--font-mono)' }}>[ ABORT_AND_RETURN ]</button>
+
+                <div className="flex flex-col gap-3">
+                  <Button type="submit" isLoading={loading} className="w-full">
+                    BYPASS SECURITY
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => setMode('login')} className="w-full">
+                    ABORT & RETURN
+                  </Button>
+                </div>
               </form>
             )}
-          </>
-        )}
+          </motion.div>
+        </AnimatePresence>
 
-        <div style={{ marginTop: 'var(--sp-8)', borderTop: '1px solid #111', paddingTop: 'var(--sp-4)', textAlign: 'center' }}>
-          <div style={{ fontSize: '0.6rem', color: '#333', fontFamily: 'var(--font-mono)', fontWeight: 800 }}>
-             IP_LOGGING_ACTIVE | LATENCY: 24ms | STATUS: SECURE
+        {/* Footer telemetry */}
+        <div className="mt-8 pt-4 border-t border-white/5 text-center flex flex-col gap-1 items-center justify-center">
+          <div className="flex items-center gap-2 text-[10px] text-gray-500 font-mono tracking-wider">
+            <Cpu className="w-3 h-3 text-cyber-cyan animate-pulse" />
+            IP LOGGING ACTIVE | LATENCY: {Math.floor(Math.random() * 30 + 10)}ms
+          </div>
+          <div className="text-[10px] text-cyber-green/50 font-mono tracking-widest uppercase">
+            STATUS: SECURE
           </div>
         </div>
-      </div>
-
-      {/* Visual Footer */}
-      <div style={{ position: 'absolute', bottom: 20, left: 20, right: 20, display: 'flex', justifyContent: 'space-between', color: '#222', fontSize: '0.6rem', fontFamily: 'var(--font-mono)' }}>
-        <span>UPLINK_STATUS: ACTIVE</span>
-        <span>LOCATION: [REDACTED]</span>
-        <span>SESSION: {Math.random().toString(16).slice(2, 10).toUpperCase()}</span>
-      </div>
+      </Card>
     </div>
   )
 }

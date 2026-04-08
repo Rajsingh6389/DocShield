@@ -1,131 +1,81 @@
 import React from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
-import {
-  Shield, LayoutDashboard, Upload, Folder,
-  Settings, Activity, LogOut, ChevronLeft,
-  X, Bell, Briefcase, ShieldAlert, Database
-} from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { LayoutDashboard, Upload, FolderSearch, Link2, Settings, ShieldCheck, Activity, Bell } from 'lucide-react'
 import { useAuthStore, useUIStore } from '../store/useStore'
+import { motion } from 'framer-motion'
+
+const LINKS = [
+  { path: '/dashboard', label: 'COMMAND_CENTER', icon: LayoutDashboard },
+  { path: '/upload', label: 'SECURE_UPLINK', icon: Upload },
+  { path: '/cases', label: 'INCIDENT_REPORTS', icon: FolderSearch },
+  { path: '/blockchain', label: 'ON_CHAIN_LEDGER', icon: Link2 },
+  { path: '/activity', label: 'TELEMETRY_LOGS', icon: Activity },
+  { path: '/notifications', label: 'ALERTS', icon: Bell },
+]
 
 export default function Sidebar() {
-  const { sidebarOpen, toggleSidebar } = useUIStore()
-  const { logout, user } = useAuthStore()
-  const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const { sidebarOpen } = useUIStore()
 
-  const handleLogout = () => { logout(); navigate('/login') }
-
-  const navItems = [
-    { to: '/dashboard', icon: LayoutDashboard, label: 'DASHBOARD', roles: ['admin', 'reviewer', 'auditor'] },
-    { to: '/upload',    icon: Upload,          label: 'UPLINK',    roles: ['admin', 'reviewer', 'auditor'] },
-    { to: '/blockchain', icon: Database,        label: 'BLOCKCHAIN', roles: ['admin', 'reviewer', 'auditor'] },
-    { to: '/notifications', icon: Bell,        label: 'ALERTS',    roles: ['admin', 'reviewer', 'auditor'] },
-    { to: '/cases',     icon: Briefcase,       label: 'INCIDENTS', roles: ['admin', 'reviewer'] },
-    { to: '/admin',     icon: ShieldAlert,     label: 'ROOT_ADM',  roles: ['admin'] },
-    { to: '/activity',  icon: Activity,        label: 'AUDIT_LOG', roles: ['admin', 'auditor'] },
-    { to: '/settings',  icon: Settings,        label: 'SETTINGS',  roles: ['admin', 'reviewer', 'auditor'] },
-  ]
-
-  const filteredNav = navItems.filter(item => !item.roles || (user && item.roles.includes(user.role)))
+  const links = [...LINKS]
+  if (user?.role === 'admin') {
+    links.push({ path: '/admin', label: 'ADMINISTRATION', icon: ShieldCheck })
+  }
+  links.push({ path: '/settings', label: 'CONFIGURATION', icon: Settings })
 
   return (
-    <aside 
-      className="sidebar"
-      style={{ 
-        width: sidebarOpen ? 240 : 68,
-        position: window.innerWidth < 768 ? 'fixed' : 'relative',
-        height: '100%',
-        left: window.innerWidth < 768 && !sidebarOpen ? -240 : 0,
-        background: '#0a0a0a',
-        borderRight: '1px solid #111',
-        zIndex: 1000,
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-      }}
-    >
-      {/* Brand */}
-      <div className="sidebar-header" style={{ padding: 'var(--sp-6) var(--sp-4)', borderBottom: '1px solid #111' }}>
-        <div style={{ 
-          width: 32, height: 32, 
-          background: 'var(--neon-green)', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: 'var(--glow-green)'
-        }}>
-          <Shield size={18} color="#000" />
-        </div>
-        {sidebarOpen && (
-          <div style={{ display:'flex', flexDirection:'column', marginLeft: 12 }}>
-            <span className="glitch" style={{ fontSize:'0.85rem', fontWeight:900, color:'#fff', letterSpacing:'0.1em' }}>DOCUSHIELD</span>
-            <span className="typewriter" style={{ fontSize:'0.55rem', color:'var(--neon-green)', fontWeight:800, width:'fit-content' }}>SYSTEM_v2.0.4</span>
-          </div>
-        )}
-        {window.innerWidth < 768 && sidebarOpen && (
-          <button onClick={toggleSidebar} style={{ background: 'none', border: 'none', color: '#333' }}>
-            <X size={18} />
-          </button>
-        )}
+    <div className={`
+      fixed inset-y-0 left-0 z-50 w-64 bg-obsidian-800/95 backdrop-blur-xl border-r border-white/5
+      flex flex-col transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
+      ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+    `}>
+      <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0 relative">
+        <ShieldCheck className="w-6 h-6 text-cyber-green mr-3" />
+        <span className="font-hud font-bold text-white tracking-[0.2em] shadow-cyber-green">DOCUSHIELD</span>
+        <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-cyber-green to-transparent w-full" />
       </div>
 
-      {/* Navigation */}
-      <nav className="sidebar-nav" style={{ padding: 'var(--sp-4) 0' }}>
-        {filteredNav.map(({ to, icon: Icon, label }) => (
+      <nav className="flex-1 overflow-y-auto py-6 px-3 flex flex-col gap-1 custom-scrollbar">
+        {links.map(({ path, label, icon: Icon }) => (
           <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '12px 24px',
-              color: isActive ? 'var(--neon-green)' : '#444',
-              textDecoration: 'none',
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              fontFamily: 'var(--font-mono)',
-              borderLeft: isActive ? '3px solid var(--neon-green)' : '3px solid transparent',
-              background: isActive ? 'rgba(0,255,65,0.02)' : 'transparent',
-              transition: 'all 0.2s',
-              textShadow: isActive ? 'var(--glow-green)' : 'none'
-            })}
+            key={path}
+            to={path}
+            className={({ isActive }) => `
+              relative flex items-center px-3 py-3 rounded-lg text-xs font-mono font-bold tracking-widest uppercase
+              transition-all duration-200 group
+              ${isActive ? 'text-cyber-green bg-cyber-green/10' : 'text-gray-400 hover:text-white hover:bg-white/5'}
+            `}
           >
-            <Icon size={18} />
-            {sidebarOpen && <span>{label}</span>}
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <motion.div 
+                    layoutId="sidebar-active"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyber-green rounded-r drop-shadow-[0_0_8px_rgba(0,255,65,0.8)]"
+                  />
+                )}
+                <Icon size={18} className={`mr-3 transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      {/* User + Collapse */}
-      <div style={{ padding: 'var(--sp-4)', borderTop: '1px solid #111', marginTop: 'auto' }}>
-        {sidebarOpen && user && (
-          <div style={{ 
-            padding: 'var(--sp-3)', 
-            background: '#050505', 
-            marginBottom: 'var(--sp-3)',
-            border: '1px solid #111'
-          }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--neon-cyan)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user.full_name?.toUpperCase()}
-            </div>
-            <div style={{ fontSize: '0.55rem', color: '#444', fontWeight: 800 }}>
-              [{user.role?.toUpperCase()}]
-            </div>
-          </div>
-        )}
-        
-        <button onClick={handleLogout} className="btn btn-secondary" style={{ width: '100%', padding: '0.4rem', border: '1px solid #222', fontSize: '0.6rem' }}>
-          <LogOut size={14} />
-          {sidebarOpen && <span style={{ marginLeft: 8 }}>TERMINATE</span>}
-        </button>
-
-        {window.innerWidth >= 768 && (
-          <button onClick={toggleSidebar} style={{
-            width: '100%', marginTop: 'var(--sp-2)', background: 'none', border: 'none',
-            color: '#222', cursor: 'pointer', display: 'flex', alignItems: 'center',
-            justifyContent: sidebarOpen ? 'flex-end' : 'center', padding: 'var(--sp-2)',
-          }}>
-            <ChevronLeft size={16} style={{ transform: sidebarOpen ? 'none' : 'rotate(180deg)', transition: 'transform 0.3s' }} />
-          </button>
-        )}
+      <div className="p-4 border-t border-white/5 bg-obsidian-900/50">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 rounded-full bg-cyber-green animate-pulse" />
+          <span className="text-[10px] font-mono text-gray-500 tracking-wider">SYSTEM_STATUS_NOMINAL</span>
+        </div>
+        <div className="h-1 w-full bg-obsidian-900 rounded-full overflow-hidden">
+          <motion.div 
+            className="h-full bg-cyber-green"
+            initial={{ width: 0 }}
+            animate={{ width: '100%' }}
+            transition={{ duration: 1.5, ease: 'easeOut' }}
+          />
+        </div>
       </div>
-    </aside>
+    </div>
   )
 }
