@@ -4,6 +4,8 @@ import { Briefcase, Eye, CheckCircle, XCircle, AlertTriangle, Shield, Search, Te
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
+import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
 
 export default function CasesPage() {
   const navigate = useNavigate()
@@ -37,93 +39,116 @@ export default function CasesPage() {
   }
 
   return (
-    <div className="fade-in">
-      <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-2)' }}>
-          <Briefcase size={14} color="var(--neon-green)" />
-          <span style={{ fontSize: '0.65rem', color: '#555', fontWeight: 700 }}>REVIEW_QUEUE::INCIDENT_MGMT_v1.0</span>
+    <div className="relative">
+      <div className="mb-8 border-b border-white/5 pb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Briefcase size={14} className="text-cyber-green animate-pulse" />
+          <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">REVIEW_QUEUE::INCIDENT_MGMT_v1.0</span>
         </div>
-        <h2 className="glitch" style={{ fontSize: '1.75rem', fontWeight: 900 }}>INCIDENT_QUEUE</h2>
-        <p className="page-subtitle typewriter" style={{ width: 'fit-content' }}>REVIEW_PENDING_FORGERY_FLAGS_AND_INVESTIGATIONS</p>
+        <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow uppercase">INCIDENT_QUEUE</h2>
+        <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">REVIEW_PENDING_FORGERY_FLAGS_AND_INVESTIGATIONS</p>
       </div>
 
       {/* Filter Bar */}
-      <div className="card" style={{ marginBottom: 'var(--sp-6)', padding: 'var(--sp-4)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-4)', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
-            <Filter size={14} color="#444" />
-            <span style={{ fontSize: '0.7rem', color: '#444', fontWeight: 800 }}>FILTER_NODES:</span>
+      <Card className="mb-8 p-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2 text-gray-500">
+            <Filter size={14} />
+            <span className="text-[10px] font-bold font-hud tracking-widest uppercase">FILTER_NODES:</span>
           </div>
-          {['all', 'pending', 'under_review', 'resolved', 'dismissed'].map(status => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              style={{
-                background: filter === status ? 'rgba(0,255,65,0.1)' : 'transparent',
-                boxShadow: filter === status ? 'inset 0 0 0 1px var(--neon-green)' : 'inset 0 0 0 1px var(--border-ghost)',
-                color: filter === status ? 'var(--neon-green)' : '#333',
-                fontSize: '0.65rem',
-                padding: '4px 8px',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              {status.toUpperCase().replace(/_/g, ' ')}
-            </button>
-          ))}
+          <div className="flex gap-2">
+            {['all', 'pending', 'under_review', 'resolved', 'dismissed'].map(status => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`
+                  px-3 py-1 text-[10px] font-mono font-bold tracking-widest uppercase transition-all duration-300 border
+                  ${filter === status 
+                    ? 'bg-cyber-green/10 border-cyber-green text-cyber-green shadow-[0_0_10px_rgba(0,255,149,0.2)]' 
+                    : 'bg-transparent border-white/5 text-gray-500 hover:border-white/20 hover:text-gray-300'}
+                `}
+              >
+                {status.replace(/_/g, ' ')}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', boxShadow: 'inset 0 -1px 0 var(--border-ghost)', paddingBottom: 'var(--sp-3)' }}>
-          <Terminal size={16} color="var(--neon-cyan)" />
-          <h3 style={{ fontSize: '0.85rem', color: 'var(--neon-cyan)' }}>CURRENT_INCIDENT_STREAM</h3>
+      <Card className="flex flex-col">
+        <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+          <Terminal size={16} className="text-cyber-cyan" />
+          <h3 className="text-sm font-bold font-hud tracking-widest text-cyber-cyan uppercase">CURRENT_INCIDENT_STREAM</h3>
         </div>
 
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--sp-12)', gap: 'var(--sp-4)' }}>
-             <div className="spin" style={{ width: 24, height: 24, border: '2px solid #111', borderTopColor: 'var(--neon-green)' }} />
-             <div style={{ fontSize: '0.7rem', color: 'var(--neon-green)', fontFamily: 'var(--font-mono)' }}>PARSING_QUEUE...</div>
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+             <div className="w-8 h-8 border-2 border-white/5 border-t-cyber-green rounded-full animate-spin" />
+             <div className="text-[10px] font-mono text-cyber-green tracking-widest uppercase">PARSING_QUEUE...</div>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table>
-              <thead><tr>
-                <th>CASE_ID</th><th className="mobile-hide">CREATED</th><th>FRAUD_SCORE</th><th>STATUS</th><th>ACTIONS</th>
-              </tr></thead>
-              <tbody>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-mono text-xs">
+              <thead>
+                <tr className="border-b-2 border-white/5 text-gray-500">
+                  <th className="pb-4 font-bold tracking-wider">CASE_ID</th>
+                  <th className="pb-4 font-bold tracking-wider hidden md:table-cell">CREATED</th>
+                  <th className="pb-4 font-bold tracking-wider">FRAUD_SCORE</th>
+                  <th className="pb-4 font-bold tracking-wider">STATUS</th>
+                  <th className="pb-4 font-bold tracking-wider text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-300">
                 {cases.length === 0 ? (
-                  <tr><td colSpan={5} style={{ textAlign:'center', color:'#333', padding:'var(--sp-12)' }}>[ NO_CASES_ALLOCATED ]</td></tr>
+                  <tr><td colSpan={5} className="py-12 text-center text-gray-600 uppercase tracking-widest">[ NO_CASES_ALLOCATED ]</td></tr>
                 ) : cases.map(c => (
-                  <tr key={c.id}>
-                    <td style={{ color: 'var(--neon-cyan)', fontWeight: 800, fontSize: '0.7rem' }}>
+                  <tr key={c.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                    <td className="py-4 font-bold text-cyber-cyan">
                       #{c.id.slice(0, 8).toUpperCase()}
                     </td>
-                    <td className="mobile-hide" style={{ color: '#444', fontSize: '0.7rem' }}>
+                    <td className="py-4 text-gray-500 hidden md:table-cell">
                       {format(new Date(c.created_at), 'yyyy-MM-dd')}
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)' }}>
-                        <div style={{ flex: 1, height: 4, background: '#111', maxWidth: 60 }}>
-                          <div style={{ height: '100%', width: `${c.document?.fraud_score || 0}%`, background: (c.document?.fraud_score || 0) > 70 ? 'var(--neon-red)' : 'var(--neon-yellow)' }} />
+                    <td className="py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-1.5 bg-black border border-white/5 rounded-full overflow-hidden min-w-[60px]">
+                          <div 
+                            style={{ width: `${c.document?.fraud_score || 0}%` }}
+                            className={`h-full ${ (c.document?.fraud_score || 0) > 70 ? 'bg-cyber-red shadow-[0_0_8px_rgba(255,51,102,0.5)]' : 'bg-cyber-yellow shadow-[0_0_8px_rgba(255,184,0,0.5)]'}`} 
+                          />
                         </div>
-                        <span style={{ fontSize: '0.7rem', color: '#fff' }}>{c.document?.fraud_score || 0}%</span>
+                        <span className="font-bold text-[10px] w-8">{c.document?.fraud_score || 0}%</span>
                       </div>
                     </td>
-                    <td>
-                      <span className={`badge badge-${c.status === 'resolved' ? 'authentic' : c.status === 'dismissed' ? 'forged' : 'processing'}`} style={{ fontSize: '0.6rem' }}>
-                        {c.status.toUpperCase()}
+                    <td className="py-4">
+                      <span className={`
+                        px-2 py-0.5 text-[9px] font-black tracking-widest rounded uppercase
+                        ${c.status === 'resolved' ? 'bg-cyber-green/10 text-cyber-green border border-cyber-green/30' : 
+                          c.status === 'dismissed' ? 'bg-cyber-red/10 text-cyber-red border border-cyber-red/30' : 
+                          'bg-cyber-cyan/10 text-cyber-cyan border border-cyber-cyan/30'}
+                      `}>
+                        {c.status}
                       </span>
                     </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
-                        <button className="btn btn-sm" onClick={() => navigate(`/results/${c.document_id}`)} style={{ padding: '2px 6px' }}>
-                          <Eye size={12} />
-                        </button>
+                    <td className="py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => navigate(`/results/${c.document_id}`)}
+                          className="px-2"
+                        >
+                          <Eye size={14} />
+                        </Button>
                         {c.status !== 'resolved' && (
-                          <button className="btn btn-sm" onClick={() => updateStatus(c.id, 'resolved')} style={{ padding: '2px 6px', color: 'var(--neon-green)', borderColor: 'var(--neon-green)' }}>
-                            <CheckCircle size={12} />
-                          </button>
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => updateStatus(c.id, 'resolved')}
+                            className="px-2 border-cyber-green/50 text-cyber-green hover:bg-cyber-green hover:text-black"
+                          >
+                            <CheckCircle size={14} />
+                          </Button>
                         )}
                       </div>
                     </td>
@@ -133,7 +158,7 @@ export default function CasesPage() {
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }

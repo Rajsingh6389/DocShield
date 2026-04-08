@@ -1,0 +1,38 @@
+
+> docushield-frontend@1.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[33m[vite:css] @import must precede all other statements (besides @charset or empty @layer)
+3  |  @tailwind utilities;
+4  |  
+5  |  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+6  |  
+7  |  :root {[39m
+[32m✓[39m 10 modules transformed.
+[31mx[39m Build failed in 863ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 1 error:
+C:/all/DocuShield/frontend/src/pages/CasesPage.jsx:163:2: ERROR: Unexpected ")"[31m
+file: [36mC:/all/DocuShield/frontend/src/pages/CasesPage.jsx:163:2[31m
+[33m
+[33mUnexpected ")"[33m
+161|    )
+162|  }
+163|    )
+   |    ^
+164|  }
+165|  
+[31m
+    at failureErrorWithLog (C:\all\DocuShield\frontend\node_modules\esbuild\lib\main.js:1472:15)
+    at C:\all\DocuShield\frontend\node_modules\esbuild\lib\main.js:755:50
+    at responseCallbacks.<computed> (C:\all\DocuShield\frontend\node_modules\esbuild\lib\main.js:622:9)
+    at handleIncomingPacket (C:\all\DocuShield\frontend\node_modules\esbuild\lib\main.js:677:12)
+    at Socket.readFromStdout (C:\all\DocuShield\frontend\node_modules\esbuild\lib\main.js:600:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

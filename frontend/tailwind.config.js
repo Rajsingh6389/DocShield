@@ -8,31 +8,34 @@ export default {
     extend: {
       colors: {
         obsidian: {
-          900: '#0a0f0d',
-          800: '#0f1412',
-          700: '#181d1a',
-          600: '#262b29',
-          500: '#313633',
+          900: '#05070a',
+          800: '#0c0e12',
+          700: '#14171c',
+          600: '#1e2329',
+          500: '#2a2f35',
         },
         cyber: {
-          cyan: '#00E5FF',
-          green: '#00FF41',
-          red: '#FF003C',
-          yellow: '#F3FF00'
+          cyan: '#00f2ff',
+          green: '#00ff95',
+          red: '#ff3366',
+          yellow: '#ffcc00',
+          purple: '#7000ff',
+          pink: '#ff007a'
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Outfit', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
-        hud: ['Inter', 'sans-serif'], // Or Poppins if added later
+        hud: ['Outfit', 'sans-serif'],
       },
       backgroundImage: {
-        'grid-pattern': "linear-gradient(to right, rgba(0, 255, 65, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 255, 65, 0.05) 1px, transparent 1px)",
+        'grid-pattern': "linear-gradient(to right, rgba(0, 242, 255, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 242, 255, 0.05) 1px, transparent 1px)",
       },
       animation: {
         'scanline': 'scanline 4s linear infinite',
-        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.2, 1) infinite',
         'matrix-rain': 'matrixRain 20s linear infinite',
+        'float': 'float 6s ease-in-out infinite',
       },
       keyframes: {
         scanline: {
@@ -40,12 +43,16 @@ export default {
           '100%': { transform: 'translateY(100vh)' }
         },
         pulseGlow: {
-          '0%, 100%': { opacity: '1', filter: 'drop-shadow(0 0 10px rgba(0,255,65,0.5))' },
-          '50%': { opacity: '.7', filter: 'drop-shadow(0 0 2px rgba(0,255,65,0.2))' },
+          '0%, 100%': { opacity: '1', filter: 'drop-shadow(0 0 15px rgba(0,242,255,0.4))' },
+          '50%': { opacity: '.6', filter: 'drop-shadow(0 0 5px rgba(0,242,255,0.2))' },
         },
         matrixRain: {
           '0%': { backgroundPosition: '0% 0%' },
           '100%': { backgroundPosition: '0% 100%' }
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
         }
       }
     },

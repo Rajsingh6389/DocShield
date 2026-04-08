@@ -4,6 +4,9 @@ import { Database, ShieldCheck, ShieldAlert, Upload, Loader, CheckCircle, Zap, T
 import { blockchainApi } from '../api/client'
 import { useAuthStore } from '../store/useStore'
 import toast from 'react-hot-toast'
+import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { motion } from 'framer-motion'
 
 const ACCEPTED = { 'image/*': ['.jpg','.jpeg','.png','.tiff','.bmp'], 'application/pdf': ['.pdf'] }
 
@@ -64,136 +67,157 @@ export default function BlockchainPage() {
   }
 
   return (
-    <div className="fade-in scanline">
-      <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-2)' }}>
-          <Database size={14} color="var(--neon-cyan)" />
-          <span style={{ fontSize: '0.65rem', color: '#555', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>BLOCKCHAIN_LEDGER :: INTEGRITY_SERVICE</span>
+    <div className="relative">
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <Database size={14} className="text-cyber-cyan" />
+          <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">BLOCKCHAIN_LEDGER :: INTEGRITY_SERVICE</span>
         </div>
-        <h2 className="glitch" style={{ fontSize: '1.75rem', fontWeight: 900 }}>BLOCKCHAIN_VERIFY</h2>
-        <p className="page-subtitle typewriter" style={{ width: 'fit-content' }}>IMMUTABLE_DOCUMENT_REGISTRATION_AND_HASH_VALIDATION_PROTOCOL</p>
+        <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">IMMUTABLE_DOCUMENT_REGISTRATION_AND_HASH_VALIDATION_PROTOCOL</p>
       </div>
 
-      <div className="dashboard-grid">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Admin Register Section */}
         {isAdmin && (
-          <div className="card neon-border-flow">
-            <div style={{ display:'flex', alignItems:'center', gap:'var(--sp-3)', marginBottom:'var(--sp-6)' }}>
-               <ShieldCheck size={20} color="var(--neon-green)" />
-               <h3 style={{ fontSize:'0.9rem', color:'#fff', fontWeight:900, fontFamily: 'var(--font-mono)' }}>ADMIN_REGISTRATION</h3>
+          <Card className="border-t-2 border-t-cyber-green animate-glow-green">
+            <div className="flex items-center gap-3 mb-6">
+               <ShieldCheck size={20} className="text-cyber-green" />
+               <h3 className="text-sm font-hud font-bold text-white tracking-widest uppercase">ADMIN_REGISTRATION</h3>
             </div>
             
-            <div {...getRegProps()} className={`upload-zone ${isRegActive ? 'active' : ''}`} style={{ padding:'var(--sp-8)', border:'1px dashed #222', background:'rgba(0,0,0,0.3)', textAlign:'center', cursor:'pointer' }}>
+            <div 
+              {...getRegProps()} 
+              className={`
+                p-8 border-2 border-dashed rounded-xl transition-all duration-300 flex flex-col items-center justify-center gap-4 cursor-pointer
+                ${isRegActive ? 'border-cyber-green bg-cyber-green/5' : 'border-white/10 bg-black/30 hover:border-cyber-green/30 hover:bg-black/40'}
+              `}
+            >
                <input {...getRegInput()} />
+               <Upload className={`w-8 h-8 ${regFile ? 'text-cyber-green' : 'text-gray-600'}`} />
                {regFile ? (
-                 <div style={{ color:'var(--neon-green)', fontSize:'0.75rem', fontWeight:800, fontFamily: 'var(--font-mono)' }}>
-                    {regFile.name.toUpperCase()} [READY]
+                 <div className="text-cyber-green text-xs font-bold font-mono tracking-widest text-center">
+                    {regFile.name.toUpperCase()} <br/> [READY_FOR_LEDGER]
                  </div>
                ) : (
-                 <div style={{ color:'#444', fontSize:'0.7rem', fontWeight:800, fontFamily: 'var(--font-mono)' }}>
+                 <div className="text-gray-500 text-[10px] font-bold font-mono tracking-widest text-center">
                     DROP_MASTER_DOCUMENT_TO_REGISTER
                  </div>
                )}
             </div>
 
-            <button 
-              className="btn btn-lg" 
-              style={{ width:'100%', marginTop:'var(--sp-4)' }} 
-              disabled={!regFile || registering}
+            <Button 
+              className="w-full mt-6" 
+              isLoading={registering}
+              disabled={!regFile}
               onClick={handleRegister}
             >
-               {registering ? <Loader size={16} className="spin" /> : <Zap size={16} />}
                {registering ? 'REGISTERING...' : 'REGISTER_ON_BLOCKCHAIN'}
-            </button>
-          </div>
+            </Button>
+          </Card>
         )}
 
         {/* User Verify Section */}
-        <div className={`card ${isAdmin ? '' : 'neon-border-flow'}`} style={{ gridColumn: isAdmin ? 'auto' : 'span 2' }}>
-           <div style={{ display:'flex', alignItems:'center', gap:'var(--sp-3)', marginBottom:'var(--sp-6)' }}>
-               <Hash size={20} color="var(--neon-cyan)" />
-               <h3 style={{ fontSize:'0.9rem', color:'#fff', fontWeight:900, fontFamily: 'var(--font-mono)' }}>INTEGRITY_CHECK</h3>
+        <Card className={`border-t-2 border-t-cyber-cyan ${!isAdmin ? 'lg:col-span-2' : ''}`}>
+           <div className="flex items-center gap-3 mb-6">
+               <Hash size={20} className="text-cyber-cyan" />
+               <h3 className="text-sm font-hud font-bold text-white tracking-widest uppercase">INTEGRITY_CHECK</h3>
             </div>
 
-            <div {...getVerProps()} className={`upload-zone ${isVerActive ? 'active' : ''}`} style={{ padding:'var(--sp-8)', border:'1px dashed #222', background:'rgba(0,0,0,0.3)', textAlign:'center', cursor:'pointer' }}>
+            <div 
+              {...getVerProps()} 
+              className={`
+                p-8 border-2 border-dashed rounded-xl transition-all duration-300 flex flex-col items-center justify-center gap-4 cursor-pointer
+                ${isVerActive ? 'border-cyber-cyan bg-cyber-cyan/5' : 'border-white/10 bg-black/30 hover:border-cyber-cyan/30 hover:bg-black/40'}
+              `}
+            >
                <input {...getVerInput()} />
+               <ShieldCheck className={`w-8 h-8 ${verifyFile ? 'text-cyber-cyan' : 'text-gray-600'}`} />
                {verifyFile ? (
-                 <div style={{ color:'var(--neon-cyan)', fontSize:'0.75rem', fontWeight:800, fontFamily: 'var(--font-mono)' }}>
-                    {verifyFile.name.toUpperCase()} [LOADED]
+                 <div className="text-cyber-cyan text-xs font-bold font-mono tracking-widest text-center">
+                    {verifyFile.name.toUpperCase()} <br/> [PAYLOAD_LOADED]
                  </div>
                ) : (
-                 <div style={{ color:'#444', fontSize:'0.7rem', fontWeight:800, fontFamily: 'var(--font-mono)' }}>
+                 <div className="text-gray-500 text-[10px] font-bold font-mono tracking-widest text-center">
                     UPLOAD_DOCUMENT_FOR_VERIFICATION
                  </div>
                )}
             </div>
 
-            <button 
-              className="btn btn-secondary btn-lg" 
-              style={{ width:'100%', marginTop:'var(--sp-4)', borderColor:'var(--neon-cyan)', color:'var(--neon-cyan)' }} 
-              disabled={!verifyFile || verifying}
+            <Button 
+              variant="secondary"
+              className="w-full mt-6" 
+              isLoading={verifying}
+              disabled={!verifyFile}
               onClick={handleVerify}
             >
-               {verifying ? <Loader size={16} className="spin" /> : <ShieldCheck size={16} />}
                {verifying ? 'VERIFYING...' : 'VERIFY_INTEGRITY'}
-            </button>
-        </div>
+            </Button>
+        </Card>
 
         {/* Result Section */}
         {result && (
-          <div className="card fade-in" style={{ gridColumn: 'span 2', borderLeft: `4px solid ${result.verified ? 'var(--neon-green)' : 'var(--neon-red)'}` }}>
-             <div style={{ display:'flex', alignItems:'flex-start', gap:'var(--sp-6)' }}>
-                <div style={{ 
-                  width:60, height:60, borderRadius:0, 
-                  background: result.verified ? 'rgba(0,255,65,0.05)' : 'rgba(255,49,49,0.05)',
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  boxShadow: `inset 0 0 0 1px ${result.verified ? 'var(--neon-green)' : 'var(--neon-red)'}`,
-                  boxShadow: result.verified ? 'var(--glow-green)' : 'var(--glow-red)'
-                }}>
-                   {result.verified ? <ShieldCheck size={32} color="var(--neon-green)" /> : <ShieldAlert size={32} color="var(--neon-red)" />}
-                </div>
-                <div style={{ flex:1 }}>
-                   <div style={{ display:'flex', alignItems:'center', gap:'var(--sp-3)', marginBottom:'var(--sp-2)' }}>
-                      <span style={{ 
-                        fontSize:'0.6rem', padding:'2px 6px', 
-                        background: result.verified ? 'var(--neon-green)' : 'var(--neon-red)', 
-                        color:'#000', fontWeight:900, fontFamily: 'var(--font-mono)' 
-                      }}>
-                        STATUS::{result.status}
-                      </span>
-                      <span style={{ fontSize:'0.65rem', color:'#444', fontFamily: 'var(--font-mono)' }}>TIMESTAMP: {new Date().toISOString()}</span>
-                   </div>
-                   <h4 style={{ color:'#fff', fontWeight:900, fontSize:'1.1rem', marginBottom:'var(--sp-2)' }}>
-                      {result.verified ? 'DOCUMENT_INTEGRITY_CONFIRMED' : 'TAMPER_ANOMALY_DETECTED'}
-                   </h4>
-                   <p style={{ color:'#888', fontSize:'0.75rem', lineHeight:1.5 }}>{result.message}</p>
-                   
-                   {result.verified && (
-                     <div style={{ marginTop:'var(--sp-4)', padding:'var(--sp-3)', background:'var(--bg-card-h)', boxShadow:'inset 0 0 0 1px var(--border-ghost)' }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                           <Terminal size={12} color="var(--neon-cyan)" />
-                           <span style={{ fontSize:'0.6rem', color:'var(--neon-cyan)', fontWeight:800, fontFamily: 'var(--font-mono)' }}>BLOCKCHAIN_TX_DATA</span>
-                        </div>
-                        <div style={{ fontSize:'0.6rem', color:'#444', fontFamily: 'var(--font-mono)', overflowWrap:'break-word' }}>
-                           TX_ID: {result.transaction_id}<br/>
-                           ORIGINAL_NAME: {result.original_filename}<br/>
-                           REGISTERED_AT: {new Date(result.registered_at).toLocaleString()}
-                        </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-2"
+          >
+            <Card className={`border-l-[6px] ${result.verified ? 'border-l-cyber-green bg-cyber-green/5' : 'border-l-cyber-red bg-cyber-red/5'}`}>
+               <div className="flex flex-col md:flex-row items-start gap-8">
+                  <div className={`
+                    w-20 h-20 shrink-0 flex items-center justify-center border-2
+                    ${result.verified ? 'border-cyber-green bg-cyber-green/10 text-cyber-green shadow-[0_0_20px_rgba(0,255,149,0.2)]' : 'border-cyber-red bg-cyber-red/10 text-cyber-red shadow-[0_0_20px_rgba(255,51,102,0.2)]'}
+                  `}>
+                     {result.verified ? <ShieldCheck size={40} /> : <ShieldAlert size={40} />}
+                  </div>
+                  
+                  <div className="flex-1">
+                     <div className="flex items-center flex-wrap gap-3 mb-2">
+                        <span className={`px-3 py-1 text-[10px] font-black tracking-widest uppercase ${result.verified ? 'bg-cyber-green text-black' : 'bg-cyber-red text-white'}`}>
+                          STATUS::{result.status}
+                        </span>
+                        <span className="text-[10px] text-gray-500 font-mono tracking-wider">TIMESTAMP: {new Date().toISOString()}</span>
                      </div>
-                   )}
-                </div>
-             </div>
-          </div>
+                     <h4 className="text-xl font-hud font-bold text-white tracking-widest mb-2">
+                        {result.verified ? 'DOCUMENT_INTEGRITY_CONFIRMED' : 'TAMPER_ANOMALY_DETECTED'}
+                     </h4>
+                     <p className="text-gray-400 text-sm font-mono leading-relaxed mb-6">{result.message}</p>
+                     
+                     {result.verified && (
+                       <div className="bg-black/40 border border-white/5 p-4 rounded-lg">
+                          <div className="flex items-center gap-2 mb-3">
+                             <Terminal size={14} className="text-cyber-cyan" />
+                             <span className="text-[10px] text-cyber-cyan font-bold font-mono tracking-widest uppercase">BLOCKCHAIN_TX_DATA</span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-8">
+                             <div className="flex flex-col">
+                                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">TX_HASH</span>
+                                <span className="text-[10px] text-gray-300 font-mono break-all">{result.transaction_id}</span>
+                             </div>
+                             <div className="flex flex-col">
+                                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">FILE_ID</span>
+                                <span className="text-[10px] text-gray-300 font-mono truncate">{result.original_filename}</span>
+                             </div>
+                             <div className="flex flex-col md:col-span-2 mt-2 pt-2 border-t border-white/5">
+                                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">LEDGER_TIMESTAMP</span>
+                                <span className="text-[10px] text-gray-300 font-mono">{new Date(result.registered_at).toLocaleString()}</span>
+                             </div>
+                          </div>
+                       </div>
+                     )}
+                  </div>
+               </div>
+            </Card>
+          </motion.div>
         )}
       </div>
 
       {/* Info Footer */}
-      <div className="card" style={{ marginTop:'var(--sp-10)', borderTop: '2px solid #222' }}>
-         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-4)' }}>
-            <Terminal size={14} color="#555" />
-            <h4 style={{ fontWeight:800, color:'#555', fontSize:'0.75rem', fontFamily: 'var(--font-mono)' }}>LEDGER_PROTOCOLS</h4>
+      <Card className="bg-black/20">
+         <div className="flex items-center gap-2 mb-6">
+            <Terminal size={16} className="text-gray-500" />
+            <h4 className="text-xs font-hud font-bold text-gray-500 tracking-widest uppercase">LEDGER_PROTOCOLS</h4>
          </div>
-         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))', gap:'var(--sp-3)' }}>
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {[
               'SHA256_HASH_VERIFICATION',
               'IMMUTABLE_LOG_ENTRY',
@@ -201,12 +225,12 @@ export default function BlockchainPage() {
               'DISTRIBUTED_INTEGRITY_CHECK',
               'TAMPER_PROOF_TIMESTAMPS'
             ].map(t => (
-              <div key={t} style={{ display:'flex', alignItems:'center', gap:'var(--sp-2)', fontSize:'0.65rem', color:'#333', fontFamily: 'var(--font-mono)' }}>
-                <span style={{ color:'var(--neon-cyan)' }}>[SYSTEM]</span> {t}
+              <div key={t} className="flex items-center gap-2 text-[10px] text-gray-600 font-mono font-bold tracking-widest uppercase">
+                <span className="text-cyber-cyan/40">[{Math.random() > 0.5 ? 'OK' : 'SYNC'}]</span> {t}
               </div>
             ))}
          </div>
-      </div>
+      </Card>
     </div>
   )
 }

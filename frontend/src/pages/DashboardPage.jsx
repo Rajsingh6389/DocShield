@@ -9,10 +9,9 @@ import { Button } from '../components/ui/Button'
 import { motion } from 'framer-motion'
 import { Loader } from '../components/ui/Loader'
 
-function StatCard({ icon: Icon, label, value, color, trend, isCritical, delay }) {
-  const shadowColor = isCritical ? 'rgba(255,0,60,0.1)' : color === 'var(--neon-green)' ? 'rgba(0,255,65,0.1)' : 'rgba(0,229,255,0.1)';
-  const borderClass = isCritical ? 'border-l-cyber-red' : color === 'var(--neon-green)' ? 'border-l-cyber-green' : color === 'var(--neon-yellow)' ? 'border-l-cyber-yellow' : 'border-l-cyber-cyan';
-  const textClass = isCritical ? 'text-cyber-red' : color === 'var(--neon-green)' ? 'text-cyber-green' : color === 'var(--neon-yellow)' ? 'text-cyber-yellow' : 'text-cyber-cyan';
+function StatCard({ icon: Icon, label, value, colorClass, trend, isCritical, delay }) {
+  const borderClass = isCritical ? 'border-l-cyber-red' : colorClass || 'border-l-cyber-cyan';
+  const textClass = isCritical ? 'text-cyber-red' : colorClass?.replace('border-l-', 'text-') || 'text-cyber-cyan';
 
   return (
     <motion.div
@@ -102,7 +101,7 @@ export default function DashboardPage() {
               label="SAMPLES_ANALYZED" 
               value={stats?.total_documents} 
               icon={Activity} 
-              color="var(--neon-cyan)" 
+              colorClass="border-l-cyber-cyan" 
               trend="+12%_SYNC"
               delay={0.1}
             />
@@ -110,7 +109,7 @@ export default function DashboardPage() {
               label="FORGERIES_BLOCKED" 
               value={stats?.forged} 
               icon={ShieldAlert} 
-              color="var(--neon-red)" 
+              colorClass="border-l-cyber-red" 
               trend="CRITICAL"
               isCritical
               delay={0.2}
@@ -119,7 +118,7 @@ export default function DashboardPage() {
               label="SUSPICIOUS_NODES" 
               value={stats?.suspicious} 
               icon={Zap} 
-              color="var(--neon-yellow)" 
+              colorClass="border-l-cyber-yellow" 
               trend="WARNING"
               delay={0.3}
             />
@@ -127,7 +126,7 @@ export default function DashboardPage() {
               label="AUTHENTIC_VERIFIED" 
               value={stats?.authentic} 
               icon={ShieldCheck} 
-              color="var(--neon-green)" 
+              colorClass="border-l-cyber-green" 
               trend="SECURE"
               delay={0.4}
             />

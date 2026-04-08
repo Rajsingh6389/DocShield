@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, CheckCircle, XCircle, Zap, Terminal, Cpu } from 'lucide-react'
+import { Upload, FileText, CheckCircle, XCircle, Zap, Terminal, Cpu, Activity } from 'lucide-react'
 import { documentsApi } from '../api/client'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'

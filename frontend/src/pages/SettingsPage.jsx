@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { authApi } from '../api/client'
-import { Shield, Key, Lock, ShieldCheck, ShieldAlert, Terminal, RefreshCw, Smartphone } from 'lucide-react'
+import { Shield, Key, Lock, ShieldCheck, ShieldAlert, Terminal, Smartphone } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/useStore'
+import { motion } from 'framer-motion'
+import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
 
 export default function SettingsPage() {
   const { user, setAuth } = useAuthStore()
@@ -31,7 +35,6 @@ export default function SettingsPage() {
       await authApi.verify2fa(verifyCode)
       toast.success('MFA_ENROLLED_SUCCESSFULLY')
       setQrVisible(false)
-      // Refresh user data (if needed, or just update local state if safe)
       const updatedUser = { ...user, totp_enabled: true }
       setAuth(useAuthStore.getState().token, updatedUser)
     } catch {
@@ -57,114 +60,140 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="fade-in">
-      <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-2)' }}>
-          <Lock size={14} color="var(--neon-green)" />
-          <span style={{ fontSize: '0.65rem', color: '#555', fontWeight: 700 }}>SECURE_CONFIG::UPLINK_SETTINGS_v1.0</span>
+    <div className="relative max-w-4xl">
+      <div className="mb-8 border-b border-white/5 pb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Lock size={14} className="text-cyber-green animate-pulse" />
+          <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">SECURE_CONFIG::UPLINK_SETTINGS_v1.0</span>
         </div>
-        <h2 className="glitch" style={{ fontSize: '1.75rem', fontWeight: 900 }}>SECURITY_CONFIG</h2>
-        <p className="page-subtitle typewriter" style={{ width: 'fit-content' }}>MANAGE_AUTHENTICATION_LEVELS_AND_ENCRYPTION_SETTINGS</p>
+        <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow uppercase">SECURITY_CONFIG</h2>
+        <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">MANAGE_AUTHENTICATION_LEVELS_AND_ENCRYPTION_SETTINGS</p>
       </div>
 
-      <div className="card" style={{ maxWidth: 600 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-6)', paddingBottom: 'var(--sp-3)', boxShadow: 'inset 0 -1px 0 var(--border-ghost)' }}>
-          <Shield size={16} color="var(--neon-cyan)" />
-          <h3 style={{ fontSize: '0.85rem', color: 'var(--neon-cyan)' }}>MULTI_FACTOR_AUTHENTICATION (MFA)</h3>
-        </div>
-
-        <div style={{ display: 'flex', gap: 'var(--sp-6)', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ width: 64, height: 64, background: 'var(--bg-hud)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {user?.totp_enabled ? (
-              <ShieldCheck size={32} color="var(--neon-green)" />
-            ) : (
-              <ShieldAlert size={32} color="var(--neon-red)" />
-            )}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fff', marginBottom: 4 }}>
-              STATUS: {user?.totp_enabled ? 'SECURED' : 'VULNERABLE'}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          <Card className="h-full">
+            <div className="flex items-center gap-2 mb-8 border-b border-white/5 pb-4">
+              <Shield size={16} className="text-cyber-cyan" />
+              <h3 className="text-sm font-bold font-hud tracking-widest text-cyber-cyan uppercase">MULTI_FACTOR_AUTHENTICATION (MFA)</h3>
             </div>
-            <p style={{ fontSize: '0.7rem', color: '#444', margin: 0, fontFamily: 'var(--font-mono)' }}>
-              {user?.totp_enabled 
-                ? 'Bi-layered authentication is active for this node.' 
-                : 'Account lacks secondary verification layer. Enable MFA immediately.'}
-            </p>
-          </div>
-          <div>
-            {user?.totp_enabled ? (
-              <button className="btn btn-sm" onClick={handleDisable} disabled={loading} style={{ color: 'var(--neon-red)', borderColor: 'var(--neon-red)', fontSize: '0.6rem' }}>
-                DISABLE_PROTOCOL
-              </button>
-            ) : (
-              <button className="btn btn-sm" onClick={init2FA} disabled={loading} style={{ fontSize: '0.6rem' }}>
-                INITIALIZE_MFA
-              </button>
-            )}
-          </div>
-        </div>
 
-        {qrVisible && setupData && (
-          <div style={{ marginTop: 'var(--sp-8)', padding: 'var(--sp-6)', background: 'rgba(0,0,0,0.3)', border: '1px dashed #222' }}>
-            <div style={{ textAlign: 'center', marginBottom: 'var(--sp-6)' }}>
-              <Terminal size={14} color="var(--neon-green)" style={{ marginBottom: 'var(--sp-2)' }} />
-              <div style={{ fontSize: '0.75rem', color: 'var(--neon-green)', fontWeight: 800 }}>MFA_UPLINK_READY</div>
-            </div>
-            
-            <div style={{ display: 'flex', gap: 'var(--sp-8)', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <div style={{ padding: 'var(--sp-2)', background: '#fff', borderRadius: 4 }}>
-                <img src={setupData.qr_code} alt="QR Code" style={{ width: 150, height: 150 }} />
+            <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center">
+              <div className={`
+                w-20 h-20 shrink-0 flex items-center justify-center border-2 transition-all duration-500
+                ${user?.totp_enabled ? 'border-cyber-green bg-cyber-green/5 shadow-[0_0_20px_rgba(0,255,149,0.2)]' : 'border-cyber-red bg-cyber-red/5 shadow-[0_0_20px_rgba(255,51,102,0.2)]'}
+              `}>
+                {user?.totp_enabled ? (
+                  <ShieldCheck size={40} className="text-cyber-green" />
+                ) : (
+                  <ShieldAlert size={40} className="text-cyber-red" />
+                )}
               </div>
-              <div style={{ maxWidth: 300 }}>
-                <div style={{ fontSize: '0.65rem', color: '#555', marginBottom: 'var(--sp-3)', fontFamily: 'var(--font-mono)' }}>
-                  SCAN_QR_OR_INPUT_SECRET:
+              
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-2 h-2 rounded-full ${user?.totp_enabled ? 'bg-cyber-green shadow-[0_0_8px_rgba(0,255,149,0.8)]' : 'bg-cyber-red shadow-[0_0_8px_rgba(255,51,102,0.8)] animate-pulse'}`} />
+                  <span className="text-xs font-black font-mono tracking-widest text-white uppercase">
+                    STATUS: {user?.totp_enabled ? 'SECURED' : 'VULNERABLE'}
+                  </span>
                 </div>
-                <div style={{ 
-                  background: '#050505', 
-                  border: '1px solid #111', 
-                  padding: 'var(--sp-3)', 
-                  fontSize: '0.75rem', 
-                  color: 'var(--neon-cyan)', 
-                  fontFamily: 'var(--font-mono)',
-                  letterSpacing: '0.1em',
-                  marginBottom: 'var(--sp-4)'
-                }}>
-                  {setupData.secret}
+                <p className="text-xs text-gray-500 font-mono leading-relaxed max-w-md">
+                  {user?.totp_enabled 
+                    ? 'Bi-layered cryptographic authentication is active. Access to this node requires a rotating time-based token.' 
+                    : 'System is currently exposed. Secondary verification layer is offline. Unauthorized access risk is CRITICAL.'}
+                </p>
+              </div>
+
+              <div className="w-full sm:w-auto mt-4 sm:mt-0">
+                {user?.totp_enabled ? (
+                  <Button variant="danger" size="sm" onClick={handleDisable} isLoading={loading} className="w-full sm:w-auto">
+                    DISABLE_PROTOCOL
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={init2FA} isLoading={loading} className="w-full sm:w-auto">
+                    INITIALIZE_MFA
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {qrVisible && setupData && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-12 p-8 bg-black/40 border border-white/5 rounded-lg relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                   <Terminal size={100} className="text-cyber-green" />
                 </div>
-                <form onSubmit={handleVerify}>
-                  <div className="form-group" style={{ marginBottom: 'var(--sp-4)' }}>
-                    <input 
-                      className="input" 
-                      type="text" 
-                      placeholder="ENTER_VERIF_TOKEN" 
-                      value={verifyCode} 
-                      onChange={(e) => setVerifyCode(e.target.value)} 
-                      style={{ background: 'var(--bg-hud)', fontSize: '0.75rem', textAlign: 'center' }}
-                      required 
-                    />
+
+                <div className="flex flex-col lg:flex-row gap-10 items-center lg:items-start relative z-10">
+                  <div className="p-3 bg-white rounded shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                    <img src={`data:image/png;base64,${setupData.qr_code_base64}`} alt="QR Code" className="w-40 h-40 mix-blend-multiply" />
                   </div>
-                  <button className="btn btn-lg" type="submit" disabled={loading} style={{ width: '100%', fontSize: '0.7rem' }}>
-                    FINALIZE_ENROLLMENT
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+                  
+                  <div className="flex-1 w-full">
+                    <div className="flex items-center gap-2 mb-4">
+                       <Smartphone size={16} className="text-cyber-green" />
+                       <span className="text-xs font-bold text-cyber-green font-hud tracking-widest uppercase">MFA_UPLINK_READY</span>
+                    </div>
+                    
+                    <div className="mb-6">
+                      <span className="text-[10px] text-gray-500 font-bold font-mono tracking-widest uppercase mb-2 block">SECRET_UPLINK_KEY</span>
+                      <div className="bg-obsidian-900 border border-white/10 p-4 text-cyber-cyan font-mono text-sm tracking-[0.2em] break-all select-all flex items-center justify-between">
+                        {setupData.secret}
+                        <Key size={14} className="opacity-30" />
+                      </div>
+                    </div>
 
-      {/* Info Card */}
-      <div className="card glass-green fade-in" style={{ marginTop: 'var(--sp-8)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-4)' }}>
-          <Smartphone size={14} color="#333" />
-          <h4 style={{ fontSize: '0.7rem', color: '#333', fontWeight: 800 }}>RECOMMENDED_AUTHENTICATORS</h4>
+                    <form onSubmit={handleVerify} className="space-y-4">
+                      <Input 
+                        label="VERIFICATION_TOKEN"
+                        placeholder="XXXXXX"
+                        maxLength={6}
+                        value={verifyCode}
+                        onChange={(e) => setVerifyCode(e.target.value)}
+                        className="text-center tracking-[0.5em]"
+                        required
+                      />
+                      <Button type="submit" isLoading={loading} className="w-full">
+                        FINALIZE_ENROLLMENT
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </Card>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--sp-6)', flexWrap: 'wrap' }}>
-          {['Google Authenticator', 'Authy', 'Microsoft Authenticator', 'FreeOTP'].map(app => (
-            <div key={app} style={{ fontSize: '0.65rem', color: '#444', fontFamily: 'var(--font-mono)' }}>
-              [ {app.toUpperCase()} ]
+
+        <div className="md:col-span-1 space-y-8">
+          <Card className="border-t-2 border-green-500/20">
+            <div className="flex items-center gap-2 mb-6">
+              <Smartphone size={16} className="text-gray-500" />
+              <h4 className="text-[10px] font-hud font-bold text-gray-500 tracking-widest uppercase">RECOMMENDED_CLIENTS</h4>
             </div>
-          ))}
+            <div className="flex flex-col gap-4">
+              {['Google Authenticator', 'Authy', 'Microsoft Auth', 'FreeOTP'].map(app => (
+                <div key={app} className="flex items-center justify-between group">
+                  <span className="text-[10px] font-mono text-gray-400 group-hover:text-white transition-colors">{app.toUpperCase()}</span>
+                  <div className="h-0.5 w-8 bg-white/5 group-hover:bg-cyber-green/30 transition-all" />
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="bg-cyber-red/5 border-cyber-red/20 opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+             <div className="flex items-center gap-2 mb-4 text-cyber-red">
+                <ShieldAlert size={16} />
+                <span className="text-[10px] font-hud font-bold tracking-widest uppercase">CRITICAL_THREATS</span>
+             </div>
+             <p className="text-[9px] font-mono text-gray-500 leading-relaxed uppercase">
+                BRUTE_FORCE_PROTECTION: ON <br/>
+                IP_GEOLOCATION_LOCK: OFF <br/>
+                SESSION_TTL: 3600S
+             </p>
+          </Card>
         </div>
       </div>
     </div>

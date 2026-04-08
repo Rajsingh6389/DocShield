@@ -19,7 +19,7 @@ const TITLES = {
 
 export default function Topbar() {
   const { pathname } = useLocation()
-  const { user, clearAuth } = useAuthStore()
+  const { user, logout: clearAuth } = useAuthStore()
   const { toggleSidebar } = useUIStore()
   const navigate = useNavigate()
 

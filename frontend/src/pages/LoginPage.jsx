@@ -134,10 +134,10 @@ export default function LoginPage() {
             <Shield className="w-8 h-8 text-cyber-green" />
           </motion.div>
           
-          <h1 className="text-2xl md:text-3xl font-hud font-bold text-white tracking-widest text-center neon-text-glow">
+          <h1 className="text-2xl md:text-4xl font-hud font-bold text-white tracking-[0.3em] text-center drop-shadow-[0_0_15px_rgba(0,242,255,0.3)]">
             DOCUSHIELD
           </h1>
-          <p className="text-cyber-cyan text-xs font-mono tracking-[0.2em] mt-2 opacity-80 uppercase">
+          <p className="text-cyber-cyan text-[10px] font-mono tracking-[0.4em] mt-3 opacity-80 uppercase">
             {mode === 'login' ? 'Security_Login_Uplink' : mode === 'register' ? 'New_Node_Initialization' : 'Multifactor_Challenge'}
           </p>
         </div>
