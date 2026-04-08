@@ -33,17 +33,25 @@ def run_histogram_analysis(image_path: str) -> Tuple[float, Dict[str, Any]]:
         # Perfect distribution = ~8 bits entropy
         # Heavily edited = "comb" gaps → lower entropy
         zero_bins = int(np.sum(hist == 0))
+        
+        # Adding Variance normalized
+        hist_var = float(np.var(hist_norm))
+        
         channel_stats[channel_name] = {
             "entropy": round(float(entropy), 3),
             "zero_bins": zero_bins,
+            "variance": round(hist_var * 1000, 4),
             "peak": int(np.argmax(hist)),
         }
-        print(f"      >> CHANNEL_{channel_name.upper()}: Entropy={entropy:.2f}, ZeroBins={zero_bins}")
-        if entropy < 5.0:
-            issues.append(f"{channel_name} channel: very low entropy ({entropy:.2f}) — possible heavy editing")
+        print(f"      >> CHANNEL_{channel_name.upper()}: Entropy={entropy:.2f}, ZeroBins={zero_bins}, Var={hist_var:.4f}")
+        
+        # Scanned documents naturally have large background color peaks (low entropy)
+        # So we only flag it if entropy is EXTREMELY low combined with comb artifacts
+        if entropy < 3.5 and zero_bins > 120:
+            issues.append(f"{channel_name} channel: very low entropy ({entropy:.2f}) + comb-like histogram — possible heavy editing")
             score += 0.2
-        if zero_bins > 80:
-            issues.append(f"{channel_name} channel: {zero_bins} zero bins — comb-like histogram")
+        elif zero_bins > 150: # Adjust strictness from 80 to 150
+            issues.append(f"{channel_name} channel: {zero_bins} zero bins — strong compression or manual levels adjustment")
             score += 0.1
 
     details = {

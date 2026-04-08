@@ -1,4 +1,5 @@
 import os
+import cv2
 from typing import Tuple, Dict, Any
 from huggingface_hub import InferenceClient
 
@@ -58,11 +59,20 @@ def run_dit_analysis(image_path: str) -> Tuple[float, Dict[str, Any]]:
 
         print(f" [🤖] AI_UPLINK :: DOCUMENT IMAGE TRANSFORMER (DiT)... (Payload: {len(image_bytes)//1024} KB)")
 
-        # 🔥 Call Hugging Face API
-        results = client.image_classification(
-            image_bytes,
-            model=model_id
-        )
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            tmp.write(image_bytes)
+            tmp_path = tmp.name
+
+        try:
+            # 🔥 Call Hugging Face API
+            results = client.image_classification(
+                tmp_path,
+                model=model_id
+            )
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
         if not results:
             return 0.0, {"status": "empty_response"}

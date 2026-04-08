@@ -68,6 +68,20 @@ def run_metadata_analysis(image_path: str) -> Tuple[float, Dict[str, Any]]:
 
     # Check software field
     software = str(exif_data.get("Software", "")).lower()
+    
+    # Fallback to raw byte signatures if EXIF is scrubbed
+    if not software:
+        try:
+            with open(image_path, "rb") as f:
+                raw_bytes = f.read(40000) # Check first 40KB for header traces
+                raw_str = raw_bytes.decode('ascii', errors='ignore').lower()
+                for sw in SUSPICIOUS_SOFTWARE:
+                    if sw in raw_str:
+                        software = f"embedded_{sw}"
+                        break
+        except Exception:
+            pass
+
     if software:
         print(f"      >> SOFTWARE_SIGNATURE: {software}")
         metadata["software"] = software
