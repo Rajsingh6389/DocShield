@@ -59,6 +59,7 @@ class UserRole(str, PyEnum):
     ADMIN = "admin"
     REVIEWER = "reviewer"
     AUDITOR = "auditor"
+    USER = "user"
 
 
 class DocumentStatus(str, PyEnum):
@@ -105,7 +106,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     full_name = Column(String(255), nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.REVIEWER, nullable=False)
+    role = Column(Enum(UserRole, values_callable=lambda x: [e.value for e in x]), default=UserRole.USER, nullable=False)
     is_active = Column(Boolean, default=True)
     totp_secret = Column(String(64), nullable=True)
     totp_enabled = Column(Boolean, default=False, server_default=text("false"))
@@ -147,7 +148,7 @@ class AnalysisResult(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     document_id = Column(GUID(), ForeignKey("documents.id"), unique=True)
     fraud_score = Column(Float, nullable=True)
-    verdict = Column(Enum(Verdict), default=Verdict.PENDING)
+    verdict = Column(Enum(Verdict, values_callable=lambda x: [e.value for e in x]), default=Verdict.PENDING)
     forgery_type = Column(String(50), default=ForgeryType.NONE.value)
 
     # Per-signal scores (0.0 – 1.0)
@@ -189,7 +190,7 @@ class Case(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     document_id = Column(GUID(), ForeignKey("documents.id"), unique=True)
     assigned_reviewer_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
-    reviewer_verdict = Column(Enum(Verdict), nullable=True)
+    reviewer_verdict = Column(Enum(Verdict, values_callable=lambda x: [e.value for e in x]), nullable=True)
     reviewer_notes = Column(Text, nullable=True)
     priority = Column(Integer, default=0)  # higher = more urgent
     is_closed = Column(Boolean, default=False)

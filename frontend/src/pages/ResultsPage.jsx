@@ -101,6 +101,7 @@ export default function ResultsPage() {
         setResult(res.data)
       } catch {
         fetchedResult.current = false  // Allow retry on failure
+        startPolling()
       }
     }
 
@@ -168,8 +169,8 @@ export default function ResultsPage() {
             setPolling(true)
           }
         }
-        ws.current.onerror = () => startPolling()
-        ws.current.onclose = () => startPolling()
+        ws.current.onerror = () => { if (!fetchedResult.current) startPolling() }
+        ws.current.onclose = () => { if (!fetchedResult.current) startPolling() }
       } catch {
         startPolling()
       }
