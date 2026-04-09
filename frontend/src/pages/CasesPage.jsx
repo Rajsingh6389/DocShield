@@ -45,7 +45,7 @@ export default function CasesPage() {
           <Briefcase size={14} className="text-cyber-green animate-pulse" />
           <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">REVIEW_QUEUE::INCIDENT_MGMT_v1.0</span>
         </div>
-        <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow uppercase">INCIDENT_QUEUE</h2>
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black font-hud text-white tracking-[0.1em] sm:tracking-widest neon-text-glow uppercase break-words">INCIDENT_QUEUE</h2>
         <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">REVIEW_PENDING_FORGERY_FLAGS_AND_INVESTIGATIONS</p>
       </div>
 
@@ -109,17 +109,17 @@ export default function CasesPage() {
                     <td className="py-4 text-gray-500 hidden md:table-cell">
                       {format(new Date(c.created_at), 'yyyy-MM-dd')}
                     </td>
-                    <td className="py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 h-1.5 bg-black border border-white/5 rounded-full overflow-hidden min-w-[60px]">
-                          <div 
-                            style={{ width: `${c.document?.fraud_score || 0}%` }}
-                            className={`h-full ${ (c.document?.fraud_score || 0) > 70 ? 'bg-cyber-red shadow-[0_0_8px_rgba(255,51,102,0.5)]' : 'bg-cyber-yellow shadow-[0_0_8px_rgba(255,184,0,0.5)]'}`} 
-                          />
-                        </div>
-                        <span className="font-bold text-[10px] w-8">{c.document?.fraud_score || 0}%</span>
-                      </div>
-                    </td>
+                        <td className="py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-black border border-white/5 rounded-full overflow-hidden min-w-[40px] hidden sm:block">
+                              <div 
+                                style={{ width: `${c.document?.fraud_score || 0}%` }}
+                                className={`h-full ${ (c.document?.fraud_score || 0) > 70 ? 'bg-cyber-red shadow-[0_0_8px_rgba(255,51,102,0.5)]' : 'bg-cyber-yellow shadow-[0_0_8px_rgba(255,184,0,0.5)]'}`} 
+                              />
+                            </div>
+                            <span className="font-bold text-[10px]">{c.document?.fraud_score || 0}%</span>
+                          </div>
+                        </td>
                     <td className="py-4">
                       <span className={`
                         px-2 py-0.5 text-[9px] font-black tracking-widest rounded uppercase

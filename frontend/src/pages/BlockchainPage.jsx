@@ -68,11 +68,12 @@ export default function BlockchainPage() {
 
   return (
     <div className="relative">
-      <div className="mb-8">
+      <div className="mb-8 border-b border-white/5 pb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Database size={14} className="text-cyber-cyan" />
+          <Database size={14} className="text-cyber-cyan animate-pulse" />
           <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">BLOCKCHAIN_LEDGER :: INTEGRITY_SERVICE</span>
         </div>
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black font-hud text-white tracking-[0.1em] sm:tracking-widest neon-text-glow uppercase break-words">BLOCKCHAIN_OS</h2>
         <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">IMMUTABLE_DOCUMENT_REGISTRATION_AND_HASH_VALIDATION_PROTOCOL</p>
       </div>
 

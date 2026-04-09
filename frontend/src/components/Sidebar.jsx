@@ -31,7 +31,7 @@ export default function Sidebar() {
     `}>
       <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0 relative">
         <ShieldCheck className="w-6 h-6 text-cyber-green mr-3" />
-        <span className="font-hud font-bold text-white tracking-[0.2em] shadow-cyber-green">DOCUSHIELD</span>
+        <span className="font-hud font-bold text-white tracking-[0.1em] sm:tracking-[0.2em] shadow-cyber-green">DOCUSHIELD</span>
         <div className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-cyber-green to-transparent w-full" />
       </div>
 

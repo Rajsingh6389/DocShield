@@ -75,10 +75,62 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true)
   const [showHeatmap, setShowHeatmap] = useState(true)
   const [polling, setPolling] = useState(false)
+  const [retrying, setRetrying] = useState(false)
   const ws = useRef(null)
+  const fetchedResult = useRef(false)  // Guard against duplicate result fetches
   const apiBase = API_BASE_URL.replace(/\/api$/, '')
 
   useEffect(() => {
+    let pollInterval = null
+    let maxPollTimer = null
+    fetchedResult.current = false
+
+    const stopPolling = () => {
+      if (pollInterval) { clearInterval(pollInterval); pollInterval = null }
+      if (maxPollTimer) { clearTimeout(maxPollTimer); maxPollTimer = null }
+      setPolling(false)
+    }
+
+    const fetchResult = async () => {
+      if (fetchedResult.current) return  // Prevent duplicate fetches
+      fetchedResult.current = true
+      stopPolling()
+      ws.current?.close()
+      try {
+        const res = await analysisApi.result(id)
+        setResult(res.data)
+      } catch {
+        fetchedResult.current = false  // Allow retry on failure
+      }
+    }
+
+    const fetchDoc = async () => {
+      try {
+        const d = await documentsApi.get(id)
+        setDoc(d.data)
+        return d.data
+      } catch { return null }
+    }
+
+    const startPolling = () => {
+      if (pollInterval) return
+      setPolling(true)
+      pollInterval = setInterval(async () => {
+        try {
+          const r = await analysisApi.status(id)
+          const status = r.data.status
+          if (status === 'completed') {
+            await fetchResult()
+          } else if (status === 'failed') {
+            await fetchDoc()
+            stopPolling()
+          }
+        } catch {}
+      }, 3000)
+      // Safety timeout: stop polling after 5 minutes to avoid infinite loop
+      maxPollTimer = setTimeout(() => { stopPolling() }, 5 * 60 * 1000)
+    }
+
     const load = async () => {
       try {
         const [d, r] = await Promise.allSettled([
@@ -86,59 +138,113 @@ export default function ResultsPage() {
           analysisApi.result(id),
         ])
         if (d.status === 'fulfilled') setDoc(d.value.data)
-        if (r.status === 'fulfilled') setResult(r.value.data)
+        if (r.status === 'fulfilled') {
+          setResult(r.value.data)
+          setLoading(false)
+          return
+        }
+        // Result not ready — check if still processing
+        const docData = d.status === 'fulfilled' ? d.value.data : null
+        if (docData?.status === 'failed') {
+          setLoading(false)
+          return
+        }
       } catch {}
       setLoading(false)
+
+      // Try WebSocket first, fall back to polling
+      try {
+        const wsUrl = getWsStatusUrl(id)
+        ws.current = new WebSocket(wsUrl)
+        ws.current.onopen = () => { startPolling() } // Start polling as backup alongside WS
+        ws.current.onmessage = async (e) => {
+          const data = JSON.parse(e.data)
+          if (data.status === 'completed') {
+            await fetchResult()
+          } else if (data.status === 'failed') {
+            await fetchDoc()
+            stopPolling()
+          } else if (data.status === 'processing' || data.status === 'queued') {
+            setPolling(true)
+          }
+        }
+        ws.current.onerror = () => startPolling()
+        ws.current.onclose = () => startPolling()
+      } catch {
+        startPolling()
+      }
     }
+
     load()
 
-    let pollInterval = null;
-    const startPolling = () => {
-      if (pollInterval) return;
-      pollInterval = setInterval(async () => {
-        try {
-          const r = await analysisApi.status(id);
-          if (r.data.status === 'completed') {
-            const res = await analysisApi.result(id);
-            setResult(res.data);
-            setPolling(false);
-            clearInterval(pollInterval);
-          } else if (r.data.status === 'processing') {
-            setPolling(true);
-          }
-        } catch {}
-      }, 3000);
-    };
-
-    try {
-      const wsUrl = getWsStatusUrl(id);
-      ws.current = new WebSocket(wsUrl);
-      ws.current.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        if (data.status === 'completed') {
-          analysisApi.result(id).then(r => { 
-            setResult(r.data); 
-            setPolling(false);
-            if (pollInterval) clearInterval(pollInterval);
-          }).catch(() => {});
-        }
-        if (data.status === 'processing') setPolling(true);
-      };
-      ws.current.onerror = () => startPolling();
-    } catch {
-      startPolling();
-    }
-
     return () => {
-      ws.current?.close();
-      if (pollInterval) clearInterval(pollInterval);
-    };
+      ws.current?.close()
+      stopPolling()
+    }
   }, [id])
 
-  if (loading || polling || !result) {
+  if (loading || polling) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
         <Loader size="lg" text={polling ? 'ANALYSIS_IN_PROGRESS...' : 'INITIATING_UPLINK...'} />
+      </div>
+    )
+  }
+
+  const handleRetry = async () => {
+    setRetrying(true)
+    try {
+      await analysisApi.retry(id)
+      setDoc(d => ({ ...d, status: 'queued' }))
+      setPolling(true)
+      // Re-start polling after retry
+      const pollRef = setInterval(async () => {
+        try {
+          const r = await analysisApi.status(id)
+          if (r.data.status === 'completed') {
+            clearInterval(pollRef)
+            const res = await analysisApi.result(id)
+            setResult(res.data)
+            setPolling(false)
+          } else if (r.data.status === 'failed') {
+            clearInterval(pollRef)
+            const d = await documentsApi.get(id)
+            setDoc(d.data)
+            setPolling(false)
+          }
+        } catch {}
+      }, 3000)
+    } catch {}
+    setRetrying(false)
+  }
+
+  if (doc?.status === 'failed') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+        <XCircle size={64} className="text-cyber-red animate-pulse" />
+        <h2 className="text-2xl font-black font-hud text-white tracking-widest uppercase">ANALYSIS_FAILED</h2>
+        <p className="text-gray-400 font-mono text-sm max-w-md text-center">
+          The secure uplink encountered a critical error during signal processing.
+        </p>
+        <div className="flex gap-3 mt-4">
+          <Button onClick={handleRetry} disabled={retrying}>
+            {retrying ? 'RETRYING...' : '⟳ RETRY_ANALYSIS'}
+          </Button>
+          <Button variant="ghost" onClick={() => navigate('/upload')}>
+            RE_UPLOAD
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!result) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
+        <Loader size="lg" text="FINALIZING_STREAMS..." />
+        <Button variant="ghost" size="sm" onClick={handleRetry} disabled={retrying} className="opacity-60 hover:opacity-100">
+          {retrying ? 'RETRYING...' : '⟳ Force Retry Analysis'}
+        </Button>
       </div>
     )
   }
@@ -163,7 +269,7 @@ export default function ResultsPage() {
             <Shield size={14} className="text-cyber-green" />
             <span className="text-[10px] font-mono text-cyber-cyan tracking-widest">SESSION_ID: {id?.slice(0,12)}</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow uppercase">ANALYSIS_REPORT_v3</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black font-hud text-white tracking-[0.1em] sm:tracking-widest neon-text-glow uppercase break-words">ANALYSIS_REPORT_v3</h2>
           {doc && <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">SOURCE: {doc.original_filename}</p>}
         </div>
         
@@ -234,7 +340,7 @@ export default function ResultsPage() {
         {/* Right Column: Visualizer & Metadata */}
         <div className="lg:col-span-7 flex flex-col gap-8">
           
-          <Card className="flex flex-col h-[600px] p-0 overflow-hidden border border-white/10">
+          <Card className="flex flex-col h-[400px] sm:h-[600px] p-0 overflow-hidden border border-white/10">
             <div className="flex items-center justify-between p-4 border-b border-white/10 bg-obsidian-800">
               <div className="flex items-center gap-2">
                 <Eye size={16} className="text-cyber-cyan" />
@@ -274,17 +380,17 @@ export default function ResultsPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="absolute top-4 left-4 bg-black/80 backdrop-blur border border-cyber-cyan/30 p-3 rounded z-30 shadow-[0_0_15px_rgba(0,229,255,0.15)] flex flex-col gap-2"
+                    className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-black/80 backdrop-blur border border-cyber-cyan/30 p-2 sm:p-3 rounded z-30 shadow-[0_0_15px_rgba(0,229,255,0.15)] flex flex-col gap-1 sm:gap-2"
                   >
-                    <div className="text-[10px] font-bold font-mono text-cyber-cyan tracking-widest uppercase mb-1">SENSOR_LEGEND</div>
-                    <div className="flex items-center gap-2 text-[10px] text-white font-mono">
-                      <div className="w-2.5 h-2.5 bg-orange-500 rounded-full shadow-[0_0_5px_orange]" /> OCR_NOISE
+                    <div className="text-[8px] sm:text-[10px] font-bold font-mono text-cyber-cyan tracking-widest uppercase mb-1">SENSOR_LEGEND</div>
+                    <div className="flex items-center gap-2 text-[8px] sm:text-[10px] text-white font-mono">
+                      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-orange-500 rounded-full shadow-[0_0_5px_orange]" /> OCR_NOISE
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-white font-mono">
-                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full shadow-[0_0_5px_red]" /> RECLONE_PXL
+                    <div className="flex items-center gap-2 text-[8px] sm:text-[10px] text-white font-mono">
+                      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-red-500 rounded-full shadow-[0_0_5px_red]" /> RECLONE_PXL
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-white font-mono">
-                      <div className="w-2.5 h-2.5 bg-cyan-500 rounded-full shadow-[0_0_5px_cyan]" /> STRUCT_ANOMALY
+                    <div className="flex items-center gap-2 text-[8px] sm:text-[10px] text-white font-mono">
+                      <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-cyan-500 rounded-full shadow-[0_0_5px_cyan]" /> STRUCT_ANOMALY
                     </div>
                   </motion.div>
                 )}

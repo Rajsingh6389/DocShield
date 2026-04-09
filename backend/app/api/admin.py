@@ -71,19 +71,32 @@ def get_audit_logs(
 
 @router.get("/stats")
 def get_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    from app.db.models import Document, AnalysisResult, DocumentStatus, Verdict
+    from app.db.models import Document, AnalysisResult, DocumentStatus, Verdict, UserRole
     from sqlalchemy import func
 
-    total_docs = db.query(func.count(Document.id)).scalar()
-    forged = db.query(func.count(AnalysisResult.id)).filter(
-        AnalysisResult.verdict == Verdict.FORGED).scalar()
-    suspicious = db.query(func.count(AnalysisResult.id)).filter(
-        AnalysisResult.verdict == Verdict.SUSPICIOUS).scalar()
-    authentic = db.query(func.count(AnalysisResult.id)).filter(
-        AnalysisResult.verdict == Verdict.AUTHENTIC).scalar()
-    processing = db.query(func.count(Document.id)).filter(
-        Document.status == DocumentStatus.PROCESSING).scalar()
-    avg_score = db.query(func.avg(AnalysisResult.fraud_score)).scalar()
+    is_staff = current_user.role in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR]
+
+    q_total = db.query(func.count(Document.id))
+    q_forged = db.query(func.count(AnalysisResult.id)).filter(AnalysisResult.verdict == "forged")
+    q_suspicious = db.query(func.count(AnalysisResult.id)).filter(AnalysisResult.verdict == "suspicious")
+    q_authentic = db.query(func.count(AnalysisResult.id)).filter(AnalysisResult.verdict == "authentic")
+    q_processing = db.query(func.count(Document.id)).filter(Document.status == "processing")
+    q_avg = db.query(func.avg(AnalysisResult.fraud_score))
+
+    if not is_staff:
+        q_total = q_total.filter(Document.uploader_id == current_user.id)
+        q_forged = q_forged.join(Document).filter(Document.uploader_id == current_user.id)
+        q_suspicious = q_suspicious.join(Document).filter(Document.uploader_id == current_user.id)
+        q_authentic = q_authentic.join(Document).filter(Document.uploader_id == current_user.id)
+        q_processing = q_processing.filter(Document.uploader_id == current_user.id)
+        q_avg = q_avg.join(Document).filter(Document.uploader_id == current_user.id)
+
+    total_docs = q_total.scalar()
+    forged = q_forged.scalar()
+    suspicious = q_suspicious.scalar()
+    authentic = q_authentic.scalar()
+    processing = q_processing.scalar()
+    avg_score = q_avg.scalar()
 
     return {
         "total_documents": total_docs,

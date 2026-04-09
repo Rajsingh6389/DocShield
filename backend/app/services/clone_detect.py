@@ -41,11 +41,14 @@ def run_clone_detection(image_path: str) -> Tuple[float, List[Dict], Dict[str, A
     if descriptors is None or len(keypoints) < 10:
         return 0.0, [], {"keypoints": 0, "matches": 0}, viz_img
 
-    # Self-matching: detect duplicate feature clusters using FLANN or BFMatcher
-    # SIFT descriptors are float32, so we use NORM_L2
-    bf = cv2.BFMatcher(cv2.NORM_L2)
+    # Self-matching: detect duplicate feature clusters using FLANN (much faster than BFMatcher)
+    FLANN_INDEX_KDTREE = 1
+    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+    search_params = dict(checks=50) # higher is more accurate but slower
+    
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
     # k=3 because matches[0] is often the identity match (point to itself)
-    matches = bf.knnMatch(descriptors, descriptors, k=3)
+    matches = flann.knnMatch(descriptors, descriptors, k=3)
 
     suspicious_pairs = []
     DIST_THRESHOLD = 30   # pixel min distance to be considered a different region

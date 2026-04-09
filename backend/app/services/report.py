@@ -69,7 +69,7 @@ def generate_pdf_report(
     # ── Document Info ─────────────────────────────────────────────────────────
     info_data = [
         ["Document", str(doc.original_filename)],
-        ["Document Type", str(doc.doc_type.value).replace("_", " ").title()],
+        ["Document Type", str(doc.doc_type).replace("_", " ").title()],
         ["Analyzed At", datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")],
         ["Document ID", str(doc.id)],
     ]
@@ -86,8 +86,9 @@ def generate_pdf_report(
     story.append(Spacer(1, 0.5 * cm))
 
     # ── Verdict Banner ────────────────────────────────────────────────────────
-    verdict_str = verdict.value.upper()
-    verdict_color = VERDICT_COLORS.get(verdict.value, colors.gray)
+    v_val = verdict.value if hasattr(verdict, 'value') else verdict
+    verdict_str = str(v_val).upper()
+    verdict_color = VERDICT_COLORS.get(str(v_val).lower(), colors.gray)
     verdict_data = [[
         Paragraph(
             f"<b>VERDICT: {verdict_str}</b>",
@@ -109,8 +110,9 @@ def generate_pdf_report(
     story.append(verdict_table)
     story.append(Spacer(1, 0.3 * cm))
 
+    ft_val = forgery_type.value if hasattr(forgery_type, 'value') else forgery_type
     story.append(Paragraph(
-        f"<b>Forgery Type:</b> {forgery_type.value.replace('_', ' ').title()}",
+        f"<b>Forgery Type:</b> {str(ft_val).replace('_', ' ').title()}",
         ParagraphStyle("ft", parent=styles["Normal"], fontSize=11,
                        textColor=colors.HexColor("#374151"), spaceAfter=10),
     ))

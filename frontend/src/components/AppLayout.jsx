@@ -41,8 +41,8 @@ export default function AppLayout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 transition-all duration-300">
         <Topbar />
         
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 min-w-0">
+          <div className="max-w-7xl mx-auto w-full">
             <Outlet />
           </div>
         </main>

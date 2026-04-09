@@ -9,7 +9,7 @@ from loguru import logger
 from app.core.deps import get_current_user, require_reviewer
 from app.db.database import get_db
 from app.db.models import (
-    AnalysisResult, Document, User, Verdict, ForgeryType
+    AnalysisResult, Document, User, Verdict, ForgeryType, UserRole
 )
 from app.schemas.schemas import AnalysisResultOut, SignalScore
 from app.core.config import settings
@@ -53,9 +53,13 @@ def get_analysis_result(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    result = db.query(AnalysisResult).filter(AnalysisResult.document_id == doc_id).first()
+    result = db.query(AnalysisResult).join(Document).filter(AnalysisResult.document_id == doc_id).first()
     if not result:
         raise HTTPException(404, "Analysis result not found. Document may still be processing.")
+    
+    # Ownership Check
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR] and result.document.uploader_id != current_user.id:
+        raise HTTPException(403, "Access denied")
 
     heatmap_url = None
     if result.heatmap_path and os.path.exists(result.heatmap_path):
@@ -94,6 +98,33 @@ def get_analysis_result_alias(
     return get_analysis_result(doc_id, current_user, db)
 
 
+@router.post("/{doc_id}/retry")
+def retry_analysis(
+    doc_id: str,
+    background_tasks=None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Re-trigger analysis for a stuck or failed document."""
+    from app.services.analysis_runner import run_analysis_sync
+    import threading
+
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(404, "Document not found")
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR] and doc.uploader_id != current_user.id:
+        raise HTTPException(403, "Access denied")
+    if doc.status == "processing":
+        return {"message": "Analysis already in progress"}
+
+    # Reset to queued and re-run
+    doc.status = "queued"
+    db.commit()
+    t = threading.Thread(target=run_analysis_sync, args=(doc_id,), daemon=True)
+    t.start()
+    return {"message": "Analysis re-triggered", "document_id": doc_id}
+
+
 @router.get("/{doc_id}/status")
 def get_analysis_status(
     doc_id: str,
@@ -106,12 +137,16 @@ def get_analysis_status(
             logger.warning(f"Status check failed: Document {doc_id} not found")
             raise HTTPException(404, "Document not found")
         
+        # Ownership Check
+        if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR] and doc.uploader_id != current_user.id:
+            raise HTTPException(403, "Access denied")
+        
         result = db.query(AnalysisResult).filter(AnalysisResult.document_id == doc_id).first()
         
         return {
             "document_id": doc_id,
-            "status": doc.status.value,
-            "verdict": result.verdict.value if result else "pending",
+            "status": doc.status,
+            "verdict": result.verdict if result else "pending",
             "fraud_score": result.fraud_score if result else None,
             "error": result.error_message if result else None,
         }
@@ -126,9 +161,13 @@ def get_heatmap(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    result = db.query(AnalysisResult).filter(AnalysisResult.document_id == doc_id).first()
+    result = db.query(AnalysisResult).join(Document).filter(AnalysisResult.document_id == doc_id).first()
     if not result or not result.heatmap_path or not os.path.exists(result.heatmap_path):
         raise HTTPException(404, "Heatmap not available")
+    
+    # Ownership Check
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR] and result.document.uploader_id != current_user.id:
+        raise HTTPException(403, "Access denied")
     return FileResponse(result.heatmap_path, media_type="image/jpeg")
 
 
@@ -138,9 +177,13 @@ def download_report(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    result = db.query(AnalysisResult).filter(AnalysisResult.document_id == doc_id).first()
+    result = db.query(AnalysisResult).join(Document).filter(AnalysisResult.document_id == doc_id).first()
     if not result or not result.report_path or not os.path.exists(result.report_path):
         raise HTTPException(404, "Report not available")
+    
+    # Ownership Check
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR] and result.document.uploader_id != current_user.id:
+        raise HTTPException(403, "Access denied")
     doc = db.query(Document).filter(Document.id == doc_id).first()
     filename = f"docushield_report_{doc_id[:8]}.pdf"
     return FileResponse(result.report_path, media_type="application/pdf", filename=filename)

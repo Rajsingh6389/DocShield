@@ -24,7 +24,7 @@ class UserOut(BaseModel):
     id: UUID
     email: str
     full_name: str
-    role: UserRole
+    role: str
     is_active: bool
     totp_enabled: bool
     created_at: datetime
@@ -54,8 +54,8 @@ class DocumentOut(BaseModel):
     original_filename: str
     file_size: int
     mime_type: str
-    doc_type: DocumentType
-    status: DocumentStatus
+    doc_type: str
+    status: str
     uploaded_at: datetime
     processed_at: Optional[datetime] = None
 
@@ -83,8 +83,8 @@ class AnalysisResultOut(BaseModel):
     id: UUID
     document_id: UUID
     fraud_score: Optional[float]
-    verdict: Verdict
-    forgery_type: ForgeryType
+    verdict: str
+    forgery_type: str
     signals: List[SignalScore]
     heatmap_url: Optional[str] = None
     report_url: Optional[str] = None

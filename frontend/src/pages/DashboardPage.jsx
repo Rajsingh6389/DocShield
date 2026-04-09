@@ -85,7 +85,7 @@ export default function DashboardPage() {
           <Terminal size={14} className="text-cyber-green" />
           <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">Uplink_Established :: Session_Active</span>
         </div>
-        <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow">DASHBOARD_OVERVIEW</h2>
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black font-hud text-white tracking-[0.1em] sm:tracking-widest neon-text-glow uppercase break-words">DASHBOARD_OVERVIEW</h2>
         <p className="text-gray-400 text-sm font-mono mt-1 opacity-80">MONITORING_NETWORK_INTEGRITY_AND_DOCUMENT_TELEMETRY</p>
       </div>
 
@@ -152,9 +152,9 @@ export default function DashboardPage() {
                     <thead>
                       <tr className="border-b-2 border-white/5 text-gray-500">
                         <th className="pb-4 font-bold tracking-wider">FILENAME</th>
-                        <th className="pb-4 font-bold tracking-wider hidden md:table-cell">TYPE</th>
+                        <th className="pb-4 font-bold tracking-wider hidden sm:table-cell">TYPE</th>
                         <th className="pb-4 font-bold tracking-wider">STATUS</th>
-                        <th className="pb-4 font-bold tracking-wider">TIMESTAMP</th>
+                        <th className="pb-4 font-bold tracking-wider hidden lg:table-cell">TIMESTAMP</th>
                         <th className="pb-4"></th>
                       </tr>
                     </thead>
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                           className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors group"
                         >
                           <td className="py-4 text-cyber-cyan font-semibold truncate max-w-[150px] md:max-w-xs pr-4">{doc.original_filename}</td>
-                          <td className="py-4 hidden md:table-cell text-gray-500">{doc.doc_type || 'RAW'}</td>
+                          <td className="py-4 hidden sm:table-cell text-gray-500">{doc.doc_type || 'RAW'}</td>
                           <td className="py-4">
                             <span className={`
                               px-2 py-1 text-[10px] font-bold tracking-widest rounded uppercase
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                               {doc.status}
                             </span>
                           </td>
-                          <td className="py-4 text-gray-500">
+                          <td className="py-4 text-gray-500 hidden lg:table-cell">
                             {doc.uploaded_at ? format(new Date(doc.uploaded_at), 'HH:mm:ss') : '--:--:--'}
                           </td>
                           <td className="py-4 text-right pr-4">

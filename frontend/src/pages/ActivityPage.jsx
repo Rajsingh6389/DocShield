@@ -25,7 +25,7 @@ export default function ActivityPage() {
           <Activity size={14} className="text-cyber-green animate-pulse" />
           <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">LOG_STREAM::ACCESS_LOG_v1.0</span>
         </div>
-        <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow uppercase">AUDIT_LOG_STREAM</h2>
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black font-hud text-white tracking-[0.1em] sm:tracking-widest neon-text-glow uppercase break-words">AUDIT_LOG_STREAM</h2>
         <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">HISTORICAL_TRACE_OF_ALL_SYSTEM_ACCESS_AND_MODIFICATIONS</p>
       </div>
 
@@ -46,10 +46,10 @@ export default function ActivityPage() {
               <table className="w-full text-left font-mono text-xs md:text-sm">
                 <thead>
                   <tr className="border-b-2 border-white/5 text-gray-500">
-                    <th className="pb-4 font-bold tracking-wider">TIMESTAMP</th>
+                    <th className="pb-4 font-bold tracking-wider hidden sm:table-cell">TIMESTAMP</th>
                     <th className="pb-4 font-bold tracking-wider">ACTION</th>
                     <th className="pb-4 font-bold tracking-wider hidden md:table-cell">RESOURCE</th>
-                    <th className="pb-4 font-bold tracking-wider">ID</th>
+                    <th className="pb-4 font-bold tracking-wider">REF_ID</th>
                     <th className="pb-4 font-bold tracking-wider hidden lg:table-cell">UPLINK_IP</th>
                   </tr>
                 </thead>
@@ -58,8 +58,8 @@ export default function ActivityPage() {
                     <tr><td colSpan={5} className="py-12 text-center text-gray-600 font-mono text-sm leading-none">[ NULL_SET ]</td></tr>
                   ) : logs.map(log => (
                     <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
-                      <td className="py-4 text-gray-500 whitespace-nowrap">
-                        {log.timestamp ? format(new Date(log.timestamp), 'yyyy-MM-dd HH:mm:ss') : '--:--:--'}
+                      <td className="py-4 text-gray-500 whitespace-nowrap hidden sm:table-cell">
+                        {log.timestamp ? format(new Date(log.timestamp), 'HH:mm:ss') : '--:--:--'}
                       </td>
                       <td className="py-4">
                         <span className={`

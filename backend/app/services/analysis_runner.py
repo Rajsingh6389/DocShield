@@ -52,17 +52,33 @@ def run_analysis_sync(document_id: str):
         doc_type_enum = classify_document_type(doc.original_filename)
         print(f" [📍] IDENTIFIED_TYPE: {doc_type_enum.value.upper()}")
         
-        print(f" [🧬] RUNNING ERROR LEVEL ANALYSIS (ELA)...")
-        ela_score, ela_array, ela_details = run_ela(image_path)
-        print(f"      >> ELA_CONFIDENCE: {ela_score*100:.2f}%")
+        # ─── Parallel Analysis Pipeline ──────────────────────────────────────────
+        from concurrent.futures import ThreadPoolExecutor
 
-        print(f" [👥] SCANNING FOR CLONED REGIONS...")
-        clone_score, matched_regions, clone_details, clone_viz = run_clone_detection(image_path)
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            # Independent tasks
+            future_ela = executor.submit(run_ela, image_path)
+            future_clone = executor.submit(run_clone_detection, image_path)
+            future_ocr = executor.submit(run_ocr_analysis, image_path)
+            future_metadata = executor.submit(run_metadata_analysis, image_path)
+            future_dit = executor.submit(run_dit_analysis, image_path)
+            future_hist = executor.submit(run_histogram_analysis, image_path)
+            future_edge = executor.submit(run_edge_analysis, image_path)
+            future_shadow = executor.submit(run_shadow_analysis, image_path)
+
+            # Wait for OCR first because QR and DocType re-verification need it
+            ela_score, ela_array, ela_details = future_ela.result()
+            clone_score, matched_regions, clone_details, clone_viz = future_clone.result()
+            ocr_score, ocr_regions, ocr_details, full_text = future_ocr.result()
+            metadata_score, metadata_details = future_metadata.result()
+            dit_score, dit_details = future_dit.result()
+            histogram_score, _ = future_hist.result()
+            edge_score, _ = future_edge.result()
+            shadow_score, _ = future_shadow.result()
+
+        print(f"      >> ELA_CONFIDENCE: {ela_score*100:.2f}%")
         print(f"      >> DUPLICATES_FOUND: {len(matched_regions)}")
 
-        print(f" [📄] EXTRACTING DIGITAL FINGERPRINTS (OCR)...")
-        ocr_score, ocr_regions, ocr_details, full_text = run_ocr_analysis(image_path)
-        
         # Re-classify with OCR text for better accuracy
         doc_type_enum = classify_document_type(doc.original_filename, full_text)
         doc.doc_type = doc_type_enum
@@ -78,18 +94,9 @@ def run_analysis_sync(document_id: str):
             ocr_details["issues"].append(f"Missing mandatory fields: {', '.join(missing_fields)}")
             ocr_details["missing_fields"] = missing_fields
 
-        print(f" [📊] ANALYZING METADATA & VISUAL SIGNALS...")
-        metadata_score, metadata_details = run_metadata_analysis(image_path)
-        histogram_score, _ = run_histogram_analysis(image_path)
-        edge_score, _ = run_edge_analysis(image_path)
-        shadow_score, _ = run_shadow_analysis(image_path)
-
-        print(f" [🧠] DOCUMENT_AI :: UPLINK :: ANALYZING STRUCTURE (DiT)...")
-        dit_score, dit_details = run_dit_analysis(image_path)
         print(f"      >> DiT_ANOMALY_INDEX: {dit_score:.4f}")
 
         print(f" [🔳] SCANNING FOR SECURE QR CODES...")
-        # Get OCR extracted fields for QR cross-reference
         ocr_ext = ocr_details.get("extracted_fields", {})
         qr_found, qr_data = run_qr_analysis(image_path, ocr_data=ocr_ext)
         qr_score = 0.0
@@ -97,27 +104,21 @@ def run_analysis_sync(document_id: str):
 
         if qr_found:
             print(f"      >> QR_SIG_DETECTED: {qr_data.get('aadhaar') or qr_data.get('raw_text', 'Generic QR')}")
-            # Cross-reference with OCR for consistency
-            ocr_ext = ocr_details.get("extracted_fields", {})
             mismatches = []
-            
-            # Simple field matching
             for field in ["name", "dob", "aadhaar", "pan"]:
                 qr_val = qr_data.get(field)
                 ocr_val = ocr_ext.get(field)
                 if qr_val and ocr_val:
                     if str(qr_val).strip().upper() != str(ocr_val).strip().upper():
                         mismatches.append(field)
-            
             if mismatches:
                 print(f"      [⚠️] QR_OCR_MISMATCH: {', '.join(mismatches)}")
-                qr_score = 0.85 # Critical signal
+                qr_score = 0.85 
                 qr_details["mismatches"] = mismatches
             else:
                 qr_score = 0.0
                 print(f"      [✅] QR_DATA_VERIFIED")
         else:
-            # If it's an Aadhaar but no QR found, it's suspicious
             if doc_type_enum.value in ["id_card", "passport"]:
                 qr_score = 0.25
                 qr_details["issue"] = "No secure QR found on identity document"
@@ -128,11 +129,6 @@ def run_analysis_sync(document_id: str):
             heatmap_filename = f"analysis_{document_id}.jpg"
             heatmap_path = os.path.join(settings.HEATMAP_DIR, heatmap_filename)
             os.makedirs(settings.HEATMAP_DIR, exist_ok=True)
-            
-            # Generate the 2x2 composite investigation report (Saved separately if needed)
-            # generate_fraud_viz(...) 
-            
-            # Generate the unified Fraud Map overlay (Primary heatmap)
             create_overlay_viz(
                 original_path=image_path,
                 ela_image=ela_array,
@@ -183,9 +179,13 @@ def run_analysis_sync(document_id: str):
             result = AnalysisResult(document_id=document_id)
             db.add(result)
 
+        # Store string values explicitly (columns are now VARCHAR)
+        verdict_str = verdict.value if hasattr(verdict, 'value') else str(verdict)
+        forgery_str = forgery_type.value if hasattr(forgery_type, 'value') else str(forgery_type)
+
         result.fraud_score = fraud_score
-        result.verdict = verdict
-        result.forgery_type = forgery_type
+        result.verdict = verdict_str
+        result.forgery_type = forgery_str
         result.ela_score = ela_score
         result.clone_score = clone_score
         result.ocr_score = ocr_score
@@ -211,14 +211,14 @@ def run_analysis_sync(document_id: str):
         try:
             os.makedirs(settings.REPORT_DIR, exist_ok=True)
             report_path = os.path.join(settings.REPORT_DIR, f"report_{document_id}.pdf")
-            generate_pdf_report(doc=doc, fraud_score=fraud_score, verdict=verdict,
-                                forgery_type=forgery_type, signal_list=signal_list,
+            generate_pdf_report(doc=doc, fraud_score=fraud_score, verdict=verdict_str,
+                                forgery_type=forgery_str, signal_list=signal_list,
                                 heatmap_path=heatmap_path, output_path=report_path)
             result.report_path = report_path
         except Exception as e:
             logger.warning(f"Report failed: {e}")
 
-        doc.status = DocumentStatus.COMPLETED
+        doc.status = "completed"
         doc.processed_at = datetime.now(timezone.utc)
         db.commit()
 
@@ -236,7 +236,7 @@ def run_analysis_sync(document_id: str):
         print("="*60)
         print(f" [🚨] ANALYSIS COMPLETE :: {verdict.value.upper()}")
         print(f" [📈] FRAUD_CONFIDENCE: {fraud_score}%")
-        print(f" [📂] FORGERY_TYPE   : {forgery_type.value.upper()}")
+        print(f" [📂] FORGERY_TYPE   : {forgery_str.upper()}")
         print("="*60 + "\n")
 
     except Exception as e:
@@ -244,7 +244,7 @@ def run_analysis_sync(document_id: str):
         try:
             doc = db.query(Document).filter(Document.id == document_id).first()
             if doc:
-                doc.status = DocumentStatus.FAILED
+                doc.status = "failed"
             result = db.query(AnalysisResult).filter(AnalysisResult.document_id == document_id).first()
             if not result:
                 result = AnalysisResult(document_id=document_id)

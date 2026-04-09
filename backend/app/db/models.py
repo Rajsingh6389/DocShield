@@ -91,6 +91,7 @@ class ForgeryType(str, PyEnum):
     STAMP_COPY = "stamp_copy"
     SIGNATURE_FORGE = "signature_forge"
     DIGITAL_MANIPULATION = "digital_manipulation"
+    IMAGE_TAMPERING = "image_tampering"
     NONE = "none"
     MULTIPLE = "multiple"
 
@@ -127,8 +128,8 @@ class Document(Base):
     file_path = Column(String(1024), nullable=False)
     file_size = Column(Integer, nullable=False)
     mime_type = Column(String(128), nullable=False)
-    doc_type = Column(Enum(DocumentType), default=DocumentType.UNKNOWN)
-    status = Column(Enum(DocumentStatus), default=DocumentStatus.QUEUED)
+    doc_type = Column(String(50), default=DocumentType.UNKNOWN.value)
+    status = Column(String(50), default=DocumentStatus.QUEUED.value)
     uploaded_at = Column(DateTime(timezone=True), default=now_utc)
     processed_at = Column(DateTime(timezone=True), nullable=True)
     uploader_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
@@ -147,7 +148,7 @@ class AnalysisResult(Base):
     document_id = Column(GUID(), ForeignKey("documents.id"), unique=True)
     fraud_score = Column(Float, nullable=True)
     verdict = Column(Enum(Verdict), default=Verdict.PENDING)
-    forgery_type = Column(Enum(ForgeryType), default=ForgeryType.NONE)
+    forgery_type = Column(String(50), default=ForgeryType.NONE.value)
 
     # Per-signal scores (0.0 – 1.0)
     ela_score = Column(Float, nullable=True)

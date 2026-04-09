@@ -52,6 +52,7 @@ export const documentsApi = {
 export const analysisApi = {
   result: (docId) => api.get(ENDPOINTS.ANALYSIS.RESULT(docId)),
   status: (docId) => api.get(ENDPOINTS.ANALYSIS.STATUS(docId)),
+  retry: (docId) => api.post(`/analysis/${docId}/retry`),
   heatmapUrl: (docId) => `${api.defaults.baseURL}${ENDPOINTS.ANALYSIS.HEATMAP(docId)}`,
   reportUrl: (docId) => `${api.defaults.baseURL}${ENDPOINTS.ANALYSIS.REPORT(docId)}`,
 }

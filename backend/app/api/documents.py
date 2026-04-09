@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.deps import get_current_user, require_reviewer
 from app.db.database import get_db
-from app.db.models import Document, DocumentStatus, DocumentType, User, AuditLog
+from app.db.models import Document, DocumentStatus, DocumentType, User, UserRole, AuditLog
 from app.schemas.schemas import DocumentOut, DocumentListOut
 from app.services.analysis_runner import run_analysis_sync
 
@@ -130,6 +130,11 @@ def list_documents(
         q = q.filter(Document.doc_type == doc_type)
     if status:
         q = q.filter(Document.status == status)
+    
+    # Filter by user if not admin/reviewer/auditor
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR]:
+        q = q.filter(Document.uploader_id == current_user.id)
+
     total = q.count()
     items = q.order_by(Document.uploaded_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
     return DocumentListOut(items=items, total=total, page=page, page_size=page_size)
@@ -140,6 +145,11 @@ def get_document(doc_id: str, db: Session = Depends(get_db), current_user: User 
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(404, "Document not found")
+    
+    # Security check: only owner or staff can see details
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR] and doc.uploader_id != current_user.id:
+        raise HTTPException(403, "Access denied")
+
     return doc
 
 
@@ -163,4 +173,9 @@ def download_document(doc_id: str, db: Session = Depends(get_db), current_user: 
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc or not os.path.exists(doc.file_path):
         raise HTTPException(404, "Document not found")
+    
+    # Security check: only owner or staff can download
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR] and doc.uploader_id != current_user.id:
+        raise HTTPException(403, "Access denied")
+
     return FileResponse(doc.file_path, filename=doc.original_filename)

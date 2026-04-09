@@ -47,7 +47,7 @@ export default function Topbar() {
           animate={{ opacity: 1, x: 0 }}
           className="flex flex-col"
         >
-          <h1 className="text-sm md:text-base font-hud font-bold tracking-[0.2em] text-white">
+          <h1 className="text-[10px] sm:text-sm md:text-base font-hud font-bold tracking-[0.1em] sm:tracking-[0.2em] text-white">
             {title}
           </h1>
           <div className="text-[10px] text-cyber-cyan font-mono tracking-widest hidden sm:block">

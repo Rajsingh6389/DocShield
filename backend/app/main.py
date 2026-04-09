@@ -6,7 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 from app.core.config import settings
-from app.db.database import create_tables
+from app.db.database import create_tables, SessionLocal
+from app.db.models import Document, DocumentStatus
 from app.api import auth, documents, analysis, cases, admin, notifications, websocket, blockchain_api
 
 from dotenv import load_dotenv
@@ -20,7 +21,31 @@ async def lifespan(app: FastAPI):
     os.makedirs(settings.HEATMAP_DIR, exist_ok=True)
     os.makedirs(settings.REPORT_DIR, exist_ok=True)
     create_tables()
-    logger.info("Database tables created/verified")
+
+    # Cleanup + re-submit stuck/queued documents
+    db = SessionLocal()
+    try:
+        # Reset any docs stuck in "processing" back to "queued"
+        stuck_count = db.query(Document).filter(Document.status == "processing").update({"status": "queued"})
+        db.commit()
+        if stuck_count > 0:
+            logger.info(f"Cleanup: Resetting {stuck_count} stuck documents to 'queued'")
+
+        # Re-submit all queued docs (including ones reset above) for analysis
+        queued_docs = db.query(Document).filter(Document.status == "queued").all()
+        if queued_docs:
+            logger.info(f"Startup: Re-submitting {len(queued_docs)} queued documents for analysis")
+            import threading
+            from app.services.analysis_runner import run_analysis_sync
+            for doc in queued_docs:
+                t = threading.Thread(target=run_analysis_sync, args=(str(doc.id),), daemon=True)
+                t.start()
+    except Exception as e:
+        logger.error(f"Startup cleanup failed: {e}")
+    finally:
+        db.close()
+
+    logger.info("Database tables verified and maintenance completed")
     yield
     logger.info("Shutting down DocuShield API")
 

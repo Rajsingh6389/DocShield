@@ -48,6 +48,10 @@
 }
 
 @layer base {
+  html, body {
+    @apply overflow-x-hidden w-full;
+  }
+
   body {
     background-color: var(--bg-deep);
     color: var(--text-primary);
@@ -61,6 +65,18 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight;
+  }
+
+  table {
+    @apply w-full border-collapse;
+  }
+
+  th {
+    @apply text-left px-2 sm:px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5;
+  }
+
+  td {
+    @apply px-2 sm:px-4 py-4 text-xs font-mono border-b border-white/5;
   }
 }
 

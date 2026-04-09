@@ -97,7 +97,7 @@ export default function UploadPage() {
           <Activity size={14} className="text-cyber-green animate-pulse" />
           <span className="text-[10px] font-mono text-cyber-cyan tracking-widest uppercase">Uplink_Status: READY</span>
         </div>
-        <h2 className="text-3xl md:text-4xl font-black font-hud text-white tracking-widest neon-text-glow uppercase">Secure_Upload</h2>
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black font-hud text-white tracking-[0.1em] sm:tracking-widest neon-text-glow uppercase break-words">Secure_Upload</h2>
         <p className="text-gray-400 text-sm font-mono mt-1 opacity-80 uppercase">INITIALIZING_QUANTUM_ANALYSIS_UPLINK</p>
       </div>
 

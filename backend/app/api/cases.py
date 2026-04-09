@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, require_reviewer
 from app.db.database import get_db
-from app.db.models import Case, Document, User, Verdict
+from app.db.models import Case, Document, User, Verdict, UserRole
 from app.schemas.schemas import CaseOut, CaseUpdate
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -24,6 +24,10 @@ def list_cases(
         q = q.filter(Case.is_closed == is_closed)
     if verdict:
         q = q.filter(Case.reviewer_verdict == verdict)
+    
+    # If not staff, only show cases for documents they own
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR]:
+        q = q.join(Document).filter(Document.uploader_id == current_user.id)
     cases = q.order_by(Case.priority.desc(), Case.created_at.desc()) \
               .offset((page - 1) * page_size).limit(page_size).all()
     return cases
@@ -31,9 +35,14 @@ def list_cases(
 
 @router.get("/{case_id}", response_model=CaseOut)
 def get_case(case_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    case = db.query(Case).filter(Case.id == case_id).first()
+    case = db.query(Case).join(Document).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(404, "Case not found")
+    
+    # Ownership Check
+    if current_user.role not in [UserRole.ADMIN, UserRole.REVIEWER, UserRole.AUDITOR] and case.document.uploader_id != current_user.id:
+        raise HTTPException(403, "Access denied")
+
     return case
 
 
