@@ -88,7 +88,7 @@ app.mount("/data/heatmaps", StaticFiles(directory=settings.HEATMAP_DIR), name="h
 app.mount("/data/reports", StaticFiles(directory=settings.REPORT_DIR), name="reports")
 
 
-@app.get("/api/health", tags=["Health"])
+@app.api_route("/api/health", methods=["GET", "HEAD"], tags=["Health"])
 def health():
     return {
         "status": "ok",

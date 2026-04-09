@@ -241,6 +241,7 @@ class BlockchainDocument(Base):
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     file_hash = Column(String(64), nullable=False, index=True, unique=True)
     original_filename = Column(String(512), nullable=False)
+    file_size = Column(Integer, nullable=True)  # File size in bytes
     admin_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     timestamp = Column(DateTime(timezone=True), default=now_utc)
     transaction_id = Column(String(128), nullable=False)  # Simulated Tx ID

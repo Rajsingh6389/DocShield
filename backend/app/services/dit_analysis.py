@@ -16,7 +16,8 @@ def get_client():
             print(" [⚠️] HF_API_TOKEN_MISSING :: DOCUMENT_AI_OFFLINE")
             return None
 
-        _CLIENT = InferenceClient(token=token)
+        # Use the new router endpoint (api-inference.huggingface.co is deprecated/410)
+        _CLIENT = InferenceClient(token=token, base_url="https://router.huggingface.co")
 
     return _CLIENT
 
