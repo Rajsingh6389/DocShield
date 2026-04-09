@@ -46,6 +46,23 @@ async def lifespan(app: FastAPI):
         db.close()
 
     logger.info("Database tables verified and maintenance completed")
+
+    # ── Schema migrations (safe to run every startup) ──────────────────────────
+    from sqlalchemy import text as sql_text
+    db = SessionLocal()
+    try:
+        # Add file_size column to blockchain_documents if it doesn't exist yet
+        try:
+            db.execute(sql_text(
+                "ALTER TABLE blockchain_documents ADD COLUMN file_size INT NULL"
+            ))
+            db.commit()
+            logger.info("Migration: Added file_size column to blockchain_documents")
+        except Exception:
+            db.rollback()  # Column already exists — ignore
+    finally:
+        db.close()
+
     yield
     logger.info("Shutting down DocuShield API")
 
