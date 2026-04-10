@@ -71,6 +71,37 @@ def compute_ensemble_score(
     }
 
     print(f"      >> WEIGHTED_FUSION: {len(scores)} signals merged via '{doc_type}' profile")
+    print("      " + "─" * 58)
+    print(f"      {'SIGNAL':<25} | {'SCORE':<8} | {'WEIGHT':<8} | {'IMPACT'}")
+    print("      " + "─" * 58)
+
+    # ✅ UI OUTPUT
+    signal_list = []
+    label_map = {
+        "ela": "Error Level Analysis",
+        "clone": "Clone Detection",
+        "ocr": "Font/Text Anomaly",
+        "metadata": "Metadata Analysis",
+        "histogram": "Color Histogram",
+        "edge": "Edge Artifacts",
+        "shadow": "Lighting Inconsistency",
+        "dit": "Document AI (DiT)",
+        "qr": "QR Code Analysis",
+    }
+
+    for key, val in scores.items():
+        weight = weights.get(key, 0)
+        impact = val * weight * 100
+        print(f"      {label_map.get(key, key):<25} | {val:<8.2f} | {weight:<8.2f} | {impact:>6.1f}%")
+        
+        signal_list.append({
+            "name": label_map.get(key, key),
+            "score": val,
+            "weight": round(weight, 3),
+            "weighted_contribution": round(impact, 2),
+            "label": _score_label(val),
+        })
+    print("      " + "─" * 58)
 
     # 🔥 Aadhaar OCR FIX (reduce false positives)
     if doc_type == "id_card":
@@ -128,29 +159,6 @@ def compute_ensemble_score(
 
     # ✅ TYPE
     forgery_type = _classify_forgery_type(scores, fraud_score)
-
-    # ✅ UI OUTPUT
-    signal_list = []
-    label_map = {
-        "ela": "Error Level Analysis",
-        "clone": "Clone Detection",
-        "ocr": "Font/Text Anomaly",
-        "metadata": "Metadata Analysis",
-        "histogram": "Color Histogram",
-        "edge": "Edge Artifacts",
-        "shadow": "Lighting Inconsistency",
-        "dit": "Document AI (DiT)",
-        "qr": "QR Code Analysis",
-    }
-
-    for key, val in scores.items():
-        signal_list.append({
-            "name": label_map.get(key, key),
-            "score": val,
-            "weight": round(weights.get(key, 0), 3),
-            "weighted_contribution": round(val * weights.get(key, 0) * 100, 2),
-            "label": _score_label(val),
-        })
 
     # 🔥 HUMAN-FRIENDLY EXPLANATION
     explanation = generate_explanation(scores, fraud_score)

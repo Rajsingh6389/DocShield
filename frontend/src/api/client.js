@@ -90,4 +90,10 @@ export const blockchainApi = {
   }),
 }
 
+// ── OSINT Intel ────────────────────────────────────────
+export const intelApi = {
+  phoneIntel: (phone) => api.get(ENDPOINTS.INTEL.PHONE(phone)),
+  downloadPdf: (phone) => `${api.defaults.baseURL}${ENDPOINTS.INTEL.PHONE_PDF(phone)}`,
+}
+
 export default api

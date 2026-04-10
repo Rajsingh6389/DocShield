@@ -1,16 +1,17 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Upload, FolderSearch, Link2, Settings, ShieldCheck, Activity, Bell } from 'lucide-react'
+import { LayoutDashboard, Upload, FolderSearch, Link2, Settings, ShieldCheck, Activity, Bell, Search } from 'lucide-react'
 import { useAuthStore, useUIStore } from '../store/useStore'
 import { motion } from 'framer-motion'
 
 const LINKS = [
-  { path: '/dashboard', label: 'COMMAND_CENTER', icon: LayoutDashboard },
-  { path: '/upload', label: 'SECURE_UPLINK', icon: Upload },
+  { path: '/dashboard', label: 'DashBoard', icon: LayoutDashboard },
+  { path: '/upload', label: 'Upload', icon: Upload },
   { path: '/cases', label: 'INCIDENT_REPORTS', icon: FolderSearch },
   { path: '/blockchain', label: 'ON_CHAIN_LEDGER', icon: Link2 },
-  { path: '/activity', label: 'TELEMETRY_LOGS', icon: Activity },
+  { path: '/activity', label: 'LOGS', icon: Activity },
   { path: '/notifications', label: 'ALERTS', icon: Bell },
+  { path: '/intel', label: 'Telegram Service', icon: Search },
 ]
 
 export default function Sidebar() {
@@ -49,7 +50,7 @@ export default function Sidebar() {
             {({ isActive }) => (
               <>
                 {isActive && (
-                  <motion.div 
+                  <motion.div
                     layoutId="sidebar-active"
                     className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyber-green rounded-r drop-shadow-[0_0_8px_rgba(0,255,65,0.8)]"
                   />
@@ -68,7 +69,7 @@ export default function Sidebar() {
           <span className="text-[10px] font-mono text-gray-500 tracking-wider">SYSTEM_STATUS_NOMINAL</span>
         </div>
         <div className="h-1 w-full bg-obsidian-900 rounded-full overflow-hidden">
-          <motion.div 
+          <motion.div
             className="h-full bg-cyber-green"
             initial={{ width: 0 }}
             animate={{ width: '100%' }}

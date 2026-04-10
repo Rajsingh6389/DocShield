@@ -14,6 +14,7 @@ const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
 const CasesPage      = lazy(() => import('./pages/CasesPage'))
 const SettingsPage   = lazy(() => import('./pages/SettingsPage'))
 const BlockchainPage = lazy(() => import('./pages/BlockchainPage'))
+const IntelPage      = lazy(() => import('./pages/IntelPage'))
 
 function PrivateRoute({ children }) {
   const token = useAuthStore((s) => s.token)
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="cases"      element={<CasesPage />} />
             <Route path="settings"   element={<SettingsPage />} />
+            <Route path="intel"      element={<IntelPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

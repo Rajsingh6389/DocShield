@@ -43,6 +43,10 @@ export const ENDPOINTS = {
   BLOCKCHAIN: {
     REGISTER: '/blockchain/register',
     VERIFY: '/blockchain/verify',
+  },
+  INTEL: {
+    PHONE: (phone) => `/intel/phone/${phone}`,
+    PHONE_PDF: (phone) => `/intel/phone/${phone}/pdf`,
   }
 };
 

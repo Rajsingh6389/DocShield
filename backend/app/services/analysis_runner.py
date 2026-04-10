@@ -78,6 +78,11 @@ def run_analysis_sync(document_id: str):
 
         print(f"      >> ELA_CONFIDENCE: {ela_score*100:.2f}%")
         print(f"      >> DUPLICATES_FOUND: {len(matched_regions)}")
+        
+        if metadata_details.get("software"):
+            print(f"      [🛠️] METADATA_SIGNATURE: {metadata_details['software']}")
+        if metadata_details.get("create_date"):
+            print(f"      [📅] ORIGIN_TIMESTAMP : {metadata_details['create_date']}")
 
         # Re-classify with OCR text for better accuracy
         doc_type_enum = classify_document_type(doc.original_filename, full_text)
@@ -98,6 +103,10 @@ def run_analysis_sync(document_id: str):
 
         print(f" [🔳] SCANNING FOR SECURE QR CODES...")
         ocr_ext = ocr_details.get("extracted_fields", {})
+        if ocr_ext:
+            fields_str = ", ".join([f"{k}:{v}" for k, v in ocr_ext.items() if v])
+            print(f" [📋] EXTRACTED_FIELDS : {fields_str[:80]}...")
+
         qr_found, qr_data = run_qr_analysis(image_path, ocr_data=ocr_ext)
         qr_score = 0.0
         qr_details = {"found": qr_found, "data": qr_data}
