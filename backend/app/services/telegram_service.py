@@ -7,14 +7,12 @@ try:
 except ImportError:
     TelegramClient = None
 from loguru import logger
-from dotenv import load_dotenv
-
-load_dotenv()
+from app.core.config import settings
 
 class TelegramIntelService:
     def __init__(self):
-        self.api_id = os.getenv("TG_API_ID")
-        self.api_hash = os.getenv("TG_API_HASH")
+        self.api_id = settings.TG_API_ID
+        self.api_hash = settings.TG_API_HASH
         # Ensure data directory exists for session
         os.makedirs("data", exist_ok=True)
         self.session_path = os.path.join("data", "docshield_session")

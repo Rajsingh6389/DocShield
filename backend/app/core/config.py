@@ -79,6 +79,10 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
 
+    # Telegram OSINT
+    TG_API_ID: str = ""
+    TG_API_HASH: str = ""
+
     model_config = {
         "env_file": ".env",
         "case_sensitive": True,
