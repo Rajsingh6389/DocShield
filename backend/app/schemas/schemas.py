@@ -90,6 +90,8 @@ class AnalysisResultOut(BaseModel):
     report_url: Optional[str] = None
     processing_time_seconds: Optional[float] = None
     ai_explainer: Optional[str] = None
+    malware_score: Optional[float] = None
+    malware_details: Optional[dict] = None
     analyzed_at: datetime
 
     class Config:

@@ -21,6 +21,7 @@ def run_analysis_sync(document_id: str):
     from app.services.visual_signals import run_histogram_analysis, run_edge_analysis, run_shadow_analysis
     from app.services.heatmap import generate_heatmap
     from app.services.ensemble import compute_ensemble_score
+    from app.services.malware_detection import run_malware_detection
     from app.services.classifier import classify_document_type
     from app.services.report import generate_pdf_report
     from app.services.visualizer import generate_fraud_viz, create_overlay_viz
@@ -65,6 +66,7 @@ def run_analysis_sync(document_id: str):
             future_hist = executor.submit(run_histogram_analysis, image_path)
             future_edge = executor.submit(run_edge_analysis, image_path)
             future_shadow = executor.submit(run_shadow_analysis, image_path)
+            future_malware = executor.submit(run_malware_detection, image_path)
 
             # Wait for OCR first because QR and DocType re-verification need it
             ela_score, ela_array, ela_details = future_ela.result()
@@ -75,6 +77,7 @@ def run_analysis_sync(document_id: str):
             histogram_score, _ = future_hist.result()
             edge_score, _ = future_edge.result()
             shadow_score, _ = future_shadow.result()
+            malware_score, malware_details = future_malware.result()
 
         print(f"      >> ELA_CONFIDENCE: {ela_score*100:.2f}%")
         print(f"      >> DUPLICATES_FOUND: {len(matched_regions)}")
@@ -157,6 +160,7 @@ def run_analysis_sync(document_id: str):
             ela_score=ela_score, clone_score=clone_score, ocr_score=ocr_score,
             metadata_score=metadata_score, histogram_score=histogram_score,
             edge_score=edge_score, shadow_score=shadow_score,
+            malware_score=malware_score,
             dit_score=dit_score,
             dit_confidence=dit_confidence,
             qr_score=qr_score,
@@ -175,7 +179,7 @@ def run_analysis_sync(document_id: str):
                 "ela": ela_score, "clone": clone_score, "ocr": ocr_score,
                 "metadata": metadata_score, "histogram": histogram_score,
                 "edge": edge_score, "shadow": shadow_score,
-                "dit": dit_score, "qr": qr_score
+                "dit": dit_score, "qr": qr_score, "malware": malware_score
             },
             identity_check=identity_check
         )
@@ -205,8 +209,10 @@ def run_analysis_sync(document_id: str):
         result.resnet_score = dit_score
         result.vit_score = 0.0 # Legacy hidden
         result.qr_score = qr_score
+        result.malware_score = malware_score
         result.vit_details = dit_details
         result.qr_details = qr_details
+        result.malware_details = malware_details
         result.ela_details = ela_details
         result.clone_details = clone_details
         result.ocr_details = ocr_details

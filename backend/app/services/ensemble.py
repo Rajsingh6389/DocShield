@@ -9,14 +9,14 @@ from app.services.qr_analysis import compare_qr_ocr
 # ✅ UPDATED WEIGHTS (AI prioritized)
 WEIGHTS = {
     "default": {
-        "ela": 0.10, "clone": 0.05, "ocr": 0.15, "metadata": 0.05,
+        "ela": 0.10, "clone": 0.05, "ocr": 0.10, "metadata": 0.05,
         "histogram": 0.05, "edge": 0.05, "shadow": 0.05,
-        "dit": 0.45, "qr": 0.05,
+        "dit": 0.40, "qr": 0.05, "malware": 0.10,
     },
     "id_card": {
         "ela": 0.10, "clone": 0.05, "ocr": 0.15, "metadata": 0.05,
         "histogram": 0.05, "edge": 0.05, "shadow": 0.05,
-        "dit": 0.50, "qr": 0.05,
+        "dit": 0.40, "qr": 0.05, "malware": 0.05,
     },
     "passport": {
         "ela": 0.10, "clone": 0.10, "ocr": 0.20, "metadata": 0.10,
@@ -47,6 +47,7 @@ def compute_ensemble_score(
     dit_score: float = 0.0,
     dit_confidence: float = 0.0,
     qr_score: float = 0.0,
+    malware_score: float = 0.0,
     doc_type: str = "default",
     qr_data: dict = None,          # 🔥 NEW
     ocr_data: dict = None          # 🔥 NEW
@@ -68,6 +69,7 @@ def compute_ensemble_score(
         "shadow": shadow_score,
         "dit": dit_score,
         "qr": qr_score,
+        "malware": malware_score,
     }
 
     print(f"      >> WEIGHTED_FUSION: {len(scores)} signals merged via '{doc_type}' profile")
@@ -87,6 +89,7 @@ def compute_ensemble_score(
         "shadow": "Lighting Inconsistency",
         "dit": "Document AI (DiT)",
         "qr": "QR Code Analysis",
+        "malware": "Malware Detection",
     }
 
     for key, val in scores.items():
@@ -184,6 +187,9 @@ def generate_explanation(scores: dict, fraud_score: float) -> str:
 
     if scores.get("clone", 0) > 0.5:
         messages.append("Duplicate regions detected")
+
+    if scores.get("malware", 0) > 0.1:
+        messages.append("Malware signatures detected in document binary")
 
     if scores.get("dit", 0) < 0.3:
         messages.append("Document structure appears consistent")

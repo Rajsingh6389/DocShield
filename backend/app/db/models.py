@@ -163,6 +163,7 @@ class AnalysisResult(Base):
     resnet_score = Column(Float, nullable=True)
     vit_score = Column(Float, nullable=True)
     qr_score = Column(Float, nullable=True)
+    malware_score = Column(Float, nullable=True)
 
     # JSON blobs for detailed findings
     ela_details = Column(JSON, nullable=True)
@@ -171,6 +172,7 @@ class AnalysisResult(Base):
     metadata_details = Column(JSON, nullable=True)
     vit_details = Column(JSON, nullable=True)
     qr_details = Column(JSON, nullable=True)
+    malware_details = Column(JSON, nullable=True)
     ai_explainer = Column(Text, nullable=True)
 
     heatmap_path = Column(String(1024), nullable=True)

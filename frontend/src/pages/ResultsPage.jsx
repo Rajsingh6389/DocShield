@@ -336,6 +336,56 @@ export default function ResultsPage() {
             </div>
           </Card>
 
+          {/* Malware Scan Results */}
+          {result.malware_details && (
+            <Card className={`border-t-2 ${result.malware_score > 0.1 ? 'border-cyber-red' : 'border-cyber-green'} overflow-hidden`}>
+              <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <Shield size={14} className={result.malware_score > 0.1 ? 'text-cyber-red' : 'text-cyber-green'} />
+                  <span className="text-[10px] font-bold font-hud tracking-widest text-white uppercase">VIRUSTOTAL_SECURITY_SCAN</span>
+                </div>
+                {result.malware_details.link && (
+                  <a href={result.malware_details.link} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-cyber-cyan hover:underline">
+                    VIEW_VT_REPORT ↗
+                  </a>
+                )}
+              </div>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div className="text-[10px] text-gray-500 font-bold tracking-widest uppercase mb-1">DETECTION_STATS</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className={`text-2xl font-black font-mono ${result.malware_score > 0.1 ? 'text-cyber-red' : 'text-cyber-green'}`}>
+                        {result.malware_details.malicious || 0}
+                      </span>
+                      <span className="text-gray-600 text-xs font-bold font-mono">/ {result.malware_details.total_engines || '--'} ENGINES</span>
+                    </div>
+                  </div>
+                  <div className={`p-2 rounded-full ${result.malware_score > 0.1 ? 'bg-cyber-red/20 text-cyber-red shadow-[0_0_15px_rgba(255,46,99,0.3)]' : 'bg-cyber-green/20 text-cyber-green shadow-[0_0_15px_rgba(0,255,65,0.3)]'}`}>
+                    {result.malware_score > 0.1 ? <AlertTriangle size={24} /> : <Shield size={24} />}
+                  </div>
+                </div>
+                
+                {result.malware_details.status === 'not_found' ? (
+                  <div className="bg-obsidian-900 border border-white/5 p-3 rounded">
+                    <p className="text-[10px] font-mono text-gray-400 italic">No historical scan found for this file hash. Signal remains neutral.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <div className="bg-obsidian-900 border border-white/5 p-2 rounded">
+                      <div className="text-[8px] text-gray-500 font-bold uppercase mb-1">SUSPICIOUS</div>
+                      <div className="text-sm font-bold font-mono text-cyber-yellow">{result.malware_details.suspicious || 0}</div>
+                    </div>
+                    <div className="bg-obsidian-900 border border-white/5 p-2 rounded">
+                      <div className="text-[8px] text-gray-500 font-bold uppercase mb-1">CLEAN/TOTAL</div>
+                      <div className="text-sm font-bold font-mono text-gray-400">{(result.malware_details.total_engines || 0) - (result.malware_details.malicious || 0) - (result.malware_details.suspicious || 0)}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
         </div>
 
         {/* Right Column: Visualizer & Metadata */}

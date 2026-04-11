@@ -73,6 +73,9 @@ class Settings(BaseSettings):
     SUSPICIOUS_THRESHOLD: float = 40.0   # fraud score % → suspicious
     FORGED_THRESHOLD: float = 70.0       # fraud score % → forged
 
+    # OSINT & Security
+    VIRUSTOTAL_API_KEY: str = ""
+
     # Email (stub)
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
@@ -82,7 +85,10 @@ class Settings(BaseSettings):
     model_config = {
         "env_file": ".env",
         "case_sensitive": True,
-        "extra": "ignore"
+        "extra": "ignore",
+        "fields": {
+            "VIRUSTOTAL_API_KEY": {"env": "virus_total_api"}
+        }
     }
 
 

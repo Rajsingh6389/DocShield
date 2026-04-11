@@ -28,6 +28,7 @@ def _build_signal_list(result: AnalysisResult):
         ("Lighting Inconsistency", result.shadow_score, None),
         ("Document AI (DiT)", result.resnet_score, result.vit_details),
         ("QR Code Analysis", result.qr_score, result.qr_details),
+        ("Malware Detection", result.malware_score, result.malware_details),
     ]
     signals = []
     for name, score, details in signal_map:
@@ -84,6 +85,8 @@ def get_analysis_result(
         report_url=report_url,
         processing_time_seconds=result.processing_time_seconds,
         ai_explainer=result.ai_explainer,
+        malware_score=result.malware_score,
+        malware_details=result.malware_details,
         analyzed_at=result.analyzed_at,
     )
 
